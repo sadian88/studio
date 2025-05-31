@@ -32,14 +32,15 @@ export default function AppHeader() {
 
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-0">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
         <Link href="/" className="flex items-center">
           <Image
+            className='pt-2'
             src="/logo.png" // Path to your logo in the public folder
             alt="CAMISETIA Logo"
             width={160} // Adjusted width
-            height={50} // Adjusted height
+            height={40} // Adjusted height
             priority // Load logo quickly
           />
         </Link>

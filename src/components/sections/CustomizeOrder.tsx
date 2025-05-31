@@ -13,8 +13,8 @@ import { useCart } from '@/context/CartContext';
 import { generateDesign } from '@/ai/flows/generate-design-flow';
 
 const shirtTypes = [
-  { id: 'short-sleeve', name: 'Manga Corta', imgSrc: 'https://placehold.co/300x400.png', hint: 'shortsleeve shirt', price: 20 },
-  { id: 'long-sleeve', name: 'Manga Larga', imgSrc: 'https://placehold.co/300x400.png', hint: 'longsleeve shirt', price: 25 },
+ { id: 'short-sleeve', name: 'Manga Corta', imgSrc: 'https://placehold.co/200x300.png', hint: 'shortsleeve shirt', price: 20 },
+ { id: 'long-sleeve', name: 'Manga Larga', imgSrc: 'https://placehold.co/200x300.png', hint: 'longsleeve shirt', price: 25 },
 ];
 
 const colors = [
