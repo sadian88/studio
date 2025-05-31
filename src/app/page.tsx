@@ -2,6 +2,7 @@ import PromotionalBanner from '@/components/layout/PromotionalBanner';
 import AppHeader from '@/components/layout/AppHeader';
 import Hero from '@/components/sections/Hero';
 import ProductGallery from '@/components/sections/ProductGallery';
+import CustomizeOrder from '@/components/sections/CustomizeOrder';
 
 export default function HomePage() {
   return (
@@ -11,6 +12,7 @@ export default function HomePage() {
       <main className="flex-grow container mx-auto px-4">
         <Hero />
         <ProductGallery />
+        <CustomizeOrder />
       </main>
       <footer className="text-center p-8 text-muted-foreground font-body text-sm border-t border-border/40 mt-16">
         <p>&copy; {new Date().getFullYear()} FlashPrint Designs. Todos los derechos reservados.</p>

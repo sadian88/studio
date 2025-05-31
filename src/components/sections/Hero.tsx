@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default function Hero() {
@@ -14,10 +15,11 @@ export default function Hero() {
         Camisetas, Hoodies, Gorras y Productos Personalizados en Medellín. Estampados Medellín.
       </p>
       <Button
+        asChild
         size="lg"
         className="mt-10 font-headline font-bold text-base md:text-lg px-10 py-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md shadow-lg hover:shadow-primary/40 transition-all duration-300"
       >
-        COMENCEMOS
+        <Link href="#create-idea">COMENCEMOS</Link>
       </Button>
     </section>
   );
