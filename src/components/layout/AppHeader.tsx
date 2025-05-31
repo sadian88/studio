@@ -1,6 +1,7 @@
 
 'use client';
 import Link from 'next/link';
+import Image from 'next/image'; // Import next/image
 import { User, ShoppingCart, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
@@ -9,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
 
 const navItems = [
-  { href: '/#collections', label: 'Colecciones' }, // Ensure these link to homepage sections if on other pages
+  { href: '/#collections', label: 'Colecciones' },
   { href: '/#create-idea', label: 'Crea tu idea' },
   { href: '/#contact', label: 'Contacto' },
 ];
@@ -33,8 +34,14 @@ export default function AppHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
-        <Link href="/" className="text-2xl md:text-3xl font-headline font-bold text-foreground">
-          FlashPrint<span className="text-accent">Designs</span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/logo.png" // Path to your logo in the public folder
+            alt="CAMISETIA Logo"
+            width={160} // Adjusted width
+            height={50} // Adjusted height
+            priority // Load logo quickly
+          />
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6 font-body">
@@ -71,8 +78,14 @@ export default function AppHeader() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] sm:w-[320px] bg-background p-6">
-              <Link href="/" className="text-2xl font-headline font-bold text-foreground mb-8 block">
-                FlashPrint<span className="text-accent">Designs</span>
+              <Link href="/" className="mb-8 block">
+                <Image
+                  src="/logo.png" // Path to your logo in the public folder
+                  alt="CAMISETIA Logo"
+                  width={160} // Adjusted width
+                  height={50} // Adjusted height
+                  priority
+                />
               </Link>
               <nav className="flex flex-col space-y-5 font-body">
                 {navItems.map((item) => (
@@ -101,4 +114,3 @@ export default function AppHeader() {
     </header>
   );
 }
-

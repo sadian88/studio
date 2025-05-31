@@ -7,7 +7,7 @@ import PromotionalBanner from '@/components/layout/PromotionalBanner';
 import AppHeader from '@/components/layout/AppHeader';
 
 export const metadata: Metadata = {
-  title: 'FlashPrint Designs',
+  title: 'CAMISETIA', // Updated title
   description: 'Diseñamos y personalizamos el mismo día. Camisetas, Hoodies, Gorras y más.',
 };
 

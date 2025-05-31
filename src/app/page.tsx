@@ -12,7 +12,7 @@ export default function HomePage() {
         <CustomizeOrder />
       </main>
       <footer className="text-center p-8 text-muted-foreground font-body text-sm border-t border-border/40 mt-16">
-        <p>&copy; {new Date().getFullYear()} FlashPrint Designs. Todos los derechos reservados.</p>
+        <p>&copy; {new Date().getFullYear()} CAMISETIA. Todos los derechos reservados.</p> 
         <p className="mt-1">Diseñado con ❤️ en Medellín</p>
       </footer>
     </div>

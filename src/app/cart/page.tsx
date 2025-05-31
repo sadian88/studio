@@ -95,7 +95,7 @@ export default function CartPage() {
                 <p className="text-sm text-muted-foreground">Color: {item.color.name}</p>
                 <p className="text-sm text-muted-foreground">
                   Diseño: {item.design.name}
-                  {item.design.id === 'ai-generated' && <Sparkles className="inline-block w-4 h-4 ml-1 text-accent" />}
+                  {item.design.id.startsWith('ai-generated') && <Sparkles className="inline-block w-4 h-4 ml-1 text-accent" />}
                 </p>
                 {item.aiPrompt && (
                   <div className="mt-1 p-2 bg-muted/30 rounded-md">
@@ -168,9 +168,8 @@ export default function CartPage() {
         </div>
       </div>
        <footer className="text-center p-8 text-muted-foreground font-body text-sm border-t border-border/40 mt-16">
-        <p>&copy; {new Date().getFullYear()} FlashPrint Designs. Todos los derechos reservados.</p>
+        <p>&copy; {new Date().getFullYear()} CAMISETIA. Todos los derechos reservados.</p>
       </footer>
     </main>
   );
 }
-
