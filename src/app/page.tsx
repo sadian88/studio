@@ -1,14 +1,11 @@
-import PromotionalBanner from '@/components/layout/PromotionalBanner';
-import AppHeader from '@/components/layout/AppHeader';
+
 import Hero from '@/components/sections/Hero';
 import ProductGallery from '@/components/sections/ProductGallery';
 import CustomizeOrder from '@/components/sections/CustomizeOrder';
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <PromotionalBanner />
-      <AppHeader />
+    <div className="flex flex-col min-h-screen">
       <main className="flex-grow container mx-auto px-4">
         <Hero />
         <ProductGallery />
