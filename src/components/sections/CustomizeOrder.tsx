@@ -265,7 +265,7 @@ export default function CustomizeOrder() {
 
           <Separator className="my-8 bg-border/40" />
           <h4 className="text-xl font-body font-semibold text-foreground mb-4 flex items-center">
-            <Sparkles className="w-5 h-5 mr-2 text-primary" />
+            <Sparkles className="w-5 h-5 mr-2 text-accent" />
             Opción B: Describe tu idea para nuestro generador IA
           </h4>
           <Textarea

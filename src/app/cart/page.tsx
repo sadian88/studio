@@ -95,11 +95,11 @@ export default function CartPage() {
                 <p className="text-sm text-muted-foreground">Color: {item.color.name}</p>
                 <p className="text-sm text-muted-foreground">
                   Diseño: {item.design.name}
-                  {item.design.id === 'ai-generated' && <Sparkles className="inline-block w-4 h-4 ml-1 text-primary" />}
+                  {item.design.id === 'ai-generated' && <Sparkles className="inline-block w-4 h-4 ml-1 text-accent" />}
                 </p>
                 {item.aiPrompt && (
                   <div className="mt-1 p-2 bg-muted/30 rounded-md">
-                    <p className="text-xs font-semibold text-primary flex items-center"><Sparkles className="w-3 h-3 mr-1.5"/> Tu idea para IA:</p>
+                    <p className="text-xs font-semibold text-accent flex items-center"><Sparkles className="w-3 h-3 mr-1.5"/> Tu idea para IA:</p>
                     <p className="text-xs text-muted-foreground italic break-words">&quot;{item.aiPrompt}&quot;</p>
                   </div>
                 )}
