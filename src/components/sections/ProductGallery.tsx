@@ -2,12 +2,12 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 
 const products = [
-  { id: 1, src: 'https://placehold.co/400x533.png', alt: 'Diseño Camiseta Moderna', hint: 'tshirt design' },
-  { id: 2, src: 'https://placehold.co/400x533.png', alt: 'Hoodie Personalizado Urbano', hint: 'hoodie mockup' },
-  { id: 3, src: 'https://placehold.co/400x533.png', alt: 'Gorra Estampada Exclusiva', hint: 'cap design' },
-  { id: 4, src: 'https://placehold.co/400x533.png', alt: 'Camiseta Gráfica Impactante', hint: 'graphic tee' },
-  { id: 5, src: 'https://placehold.co/400x533.png', alt: 'Diseño Minimalista Prenda', hint: 'minimalist apparel' },
-  { id: 6, src: 'https://placehold.co/400x533.png', alt: 'Producto Único Personalizado', hint: 'custom product' },
+  { id: 1, src: '/camisetas/cami1.png', alt: 'Diseño Camiseta Moderna', hint: 'tshirt design' },
+  { id: 2, src: '/camisetas/cami2.png', alt: 'Hoodie Personalizado Urbano', hint: 'tshirt design' },
+  { id: 3, src: '/camisetas/cami1.png', alt: 'Gorra Estampada Exclusiva', hint: 'tshirt design' },
+  { id: 4, src: '/camisetas/cami2.png', alt: 'Camiseta Gráfica Impactante', hint: 'tshirt design' },
+  { id: 5, src: '/camisetas/cami1.png', alt: 'Diseño Minimalista Prenda', hint: 'tshirt design' },
+  { id: 6, src: '/camisetas/cami2.png', alt: 'Producto Único Personalizado', hint: 'tshirt design' },
 ];
 
 export default function ProductGallery() {

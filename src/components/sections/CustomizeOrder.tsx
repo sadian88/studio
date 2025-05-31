@@ -25,7 +25,7 @@ const colors = [
 ];
 
 const designs = [
-  { id: 'design1', name: 'Diseño Abstracto Moderno', imgSrc: 'https://placehold.co/250x250.png', hint: 'abstract design', priceModifier: 5 },
+  { id: 'design1', name: 'Diseño Abstracto Moderno', imgSrc: '/disenios/caballopunk.png', hint: 'abstract design', priceModifier: 5 },
   { id: 'design2', name: 'Patrón Gráfico Urbano', imgSrc: 'https://placehold.co/250x250.png', hint: 'graphic pattern', priceModifier: 5 },
   { id: 'design3', name: 'Arte Minimalista Elegante', imgSrc: 'https://placehold.co/250x250.png', hint: 'minimalist art', priceModifier: 3 },
   { id: 'design4', name: 'Logo Vintage Clásico', imgSrc: 'https://placehold.co/250x250.png', hint: 'vintage logo', priceModifier: 4 },
