@@ -17,7 +17,7 @@ const shirtTypes = [
 ];
 
 const colors = [
-  { id: 'black', name: 'Negro', hex: '#000000', twClass: 'bg-black' },
+  { id: 'black', name: 'Negro', hex: '#000000', twClass: 'bg-black', borderClass: 'border-gray-600' },
   { id: 'white', name: 'Blanco', hex: '#FFFFFF', twClass: 'bg-white', borderClass: 'border-gray-400' },
   { id: 'yellow', name: 'Amarillo', hex: '#FACC15', twClass: 'bg-yellow-400' },
   { id: 'red', name: 'Rojo', hex: '#EF4444', twClass: 'bg-red-500' },
@@ -173,8 +173,8 @@ export default function CustomizeOrder() {
               <Card
                 key={type.id}
                 onClick={() => setSelectedShirtTypeId(type.id)}
-                className={`cursor-pointer transition-all duration-300 ease-in-out transform hover:shadow-primary/30 hover:-translate-y-1 rounded-xl overflow-hidden ${
-                  selectedShirtTypeId === type.id ? 'ring-4 ring-primary shadow-primary/20' : 'ring-1 ring-border hover:ring-primary/50'
+                className={`cursor-pointer transition-all duration-300 ease-in-out transform hover:shadow-accent/30 hover:-translate-y-1 rounded-xl overflow-hidden ${
+                  selectedShirtTypeId === type.id ? 'ring-4 ring-accent shadow-accent/20' : 'ring-1 ring-border hover:ring-accent/50'
                 } bg-card`}
               >
                 <CardContent className="p-0 relative">
@@ -189,8 +189,8 @@ export default function CustomizeOrder() {
                     />
                   </div>
                   {selectedShirtTypeId === type.id && (
-                    <div className="absolute top-3 right-3 bg-primary rounded-full p-1.5 shadow-md">
-                      <CheckCircle2 className="w-6 h-6 text-primary-foreground" />
+                    <div className="absolute top-3 right-3 bg-accent rounded-full p-1.5 shadow-md">
+                      <CheckCircle2 className="w-6 h-6 text-accent-foreground" />
                     </div>
                   )}
                    <div className="p-5 bg-card/80 backdrop-blur-sm">
@@ -213,7 +213,7 @@ export default function CustomizeOrder() {
                 onClick={() => setSelectedColorId(color.id)}
                 aria-label={`Seleccionar color ${color.name}`}
                 className={`w-12 h-12 md:w-16 md:h-16 rounded-full cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-110 shadow-md ${color.twClass} ${color.borderClass || ''} ${
-                  selectedColorId === color.id ? 'ring-4 ring-offset-2 ring-primary ring-offset-background' : 'ring-1 ring-border'
+                  selectedColorId === color.id ? 'ring-4 ring-offset-2 ring-accent ring-offset-background' : 'ring-1 ring-border'
                 }`}
                 style={{ backgroundColor: color.hex }}
               >
@@ -234,8 +234,8 @@ export default function CustomizeOrder() {
               <Card
                 key={design.id}
                 onClick={() => handleSelectDesign(design.id)}
-                className={`cursor-pointer transition-all duration-300 ease-in-out transform hover:shadow-primary/30 hover:-translate-y-1 rounded-xl overflow-hidden group ${
-                  selectedDesignId === design.id ? 'ring-4 ring-primary shadow-primary/20' : 'ring-1 ring-border hover:ring-primary/50'
+                className={`cursor-pointer transition-all duration-300 ease-in-out transform hover:shadow-accent/30 hover:-translate-y-1 rounded-xl overflow-hidden group ${
+                  selectedDesignId === design.id ? 'ring-4 ring-accent shadow-accent/20' : 'ring-1 ring-border hover:ring-accent/50'
                 } bg-card`}
               >
                 <CardContent className="p-0 relative">
@@ -250,8 +250,8 @@ export default function CustomizeOrder() {
                     />
                   </div>
                   {selectedDesignId === design.id && (
-                    <div className="absolute top-2 right-2 bg-primary rounded-full p-1 shadow-md">
-                      <CheckCircle2 className="w-5 h-5 text-primary-foreground" />
+                    <div className="absolute top-2 right-2 bg-accent rounded-full p-1 shadow-md">
+                      <CheckCircle2 className="w-5 h-5 text-accent-foreground" />
                     </div>
                   )}
                   <div className="p-3 bg-card/80 backdrop-blur-sm">
@@ -272,7 +272,7 @@ export default function CustomizeOrder() {
             placeholder="Ej: Un astronauta surfeando en una pizza con temática espacial y colores neón..."
             value={aiPrompt}
             onChange={handleAiPromptChange}
-            className="min-h-[100px] text-base border-input focus:ring-primary"
+            className="min-h-[100px] text-base border-input focus:ring-accent"
             rows={4}
           />
            {aiPrompt && (
