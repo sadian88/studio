@@ -5,11 +5,12 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea'; // Import Textarea
-import { CheckCircle2, ShoppingCart, ArrowRight, Sparkles } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle2, ShoppingCart, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/CartContext';
+import { generateDesign } from '@/ai/flows/generate-design-flow';
 
 const shirtTypes = [
   { id: 'short-sleeve', name: 'Manga Corta', imgSrc: 'https://placehold.co/300x400.png', hint: 'shortsleeve shirt', price: 20 },
@@ -31,8 +32,8 @@ const designs = [
   { id: 'design5', name: 'Ilustración Naturaleza Fresca', imgSrc: 'https://placehold.co/250x250.png', hint: 'nature illustration', priceModifier: 6 },
 ];
 
-const AI_GENERATED_DESIGN_PRICE_MODIFIER = 7; // Price modifier for AI generated designs
-const AI_DESIGN_PLACEHOLDER_IMG = 'https://placehold.co/250x250.png?text=AI+Design';
+const AI_GENERATED_DESIGN_PRICE_MODIFIER = 7; 
+const AI_DESIGN_PLACEHOLDER_IMG = 'https://placehold.co/250x250.png'; // Removed text to have a cleaner placeholder
 const AI_DESIGN_PLACEHOLDER_HINT = 'AI custom design';
 
 export default function CustomizeOrder() {
@@ -41,6 +42,8 @@ export default function CustomizeOrder() {
   const [selectedDesignId, setSelectedDesignId] = useState<string | null>(null);
   const [aiPrompt, setAiPrompt] = useState<string>('');
   const [isClient, setIsClient] = useState(false);
+  const [aiGeneratedImageUrl, setAiGeneratedImageUrl] = useState<string | null>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState<boolean>(false);
 
   const { toast } = useToast();
   const { addToCart } = useCart();
@@ -51,12 +54,43 @@ export default function CustomizeOrder() {
 
   const handleSelectDesign = (designId: string) => {
     setSelectedDesignId(designId);
-    setAiPrompt(''); // Clear AI prompt when a pre-made design is selected
+    setAiPrompt(''); 
+    setAiGeneratedImageUrl(null); // Clear AI image if a pre-made design is selected
   };
 
   const handleAiPromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setAiPrompt(event.target.value);
-    setSelectedDesignId(null); // Clear pre-made design selection when AI prompt is typed
+    setSelectedDesignId(null); 
+    setAiGeneratedImageUrl(null); // Clear AI image if prompt changes
+  };
+
+  const handleGenerateAiDesign = async () => {
+    if (!aiPrompt.trim()) {
+      toast({ title: "Entrada Requerida", description: "Por favor, ingresa una descripción para tu diseño.", variant: "destructive", duration: 3000 });
+      return;
+    }
+    setIsGeneratingImage(true);
+    setAiGeneratedImageUrl(null); 
+    try {
+      const result = await generateDesign({ prompt: aiPrompt.trim() });
+      if (result.imageDataUri) {
+        setAiGeneratedImageUrl(result.imageDataUri);
+        toast({ title: "¡Diseño IA Generado!", description: "Tu imagen personalizada ha sido creada.", duration: 3000 });
+      } else {
+        throw new Error("No se recibió imagen del flujo de Genkit.");
+      }
+    } catch (error) {
+      console.error("Error generating AI design:", error);
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error desconocido.";
+      toast({
+        title: "Error al Generar Diseño",
+        description: `No se pudo generar la imagen. ${errorMessage} Intenta de nuevo o con otra descripción.`,
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsGeneratingImage(false);
+    }
   };
 
   const handleAddToCart = () => {
@@ -75,7 +109,7 @@ export default function CustomizeOrder() {
     const shirtType = shirtTypes.find(st => st.id === selectedShirtTypeId);
     const color = colors.find(c => c.id === selectedColorId);
     
-    if (!shirtType || !color) { // Should not happen if button is enabled correctly
+    if (!shirtType || !color) { 
         toast({ title: 'Error', description: 'Tipo de prenda o color no válido.', variant: 'destructive' });
         return;
     }
@@ -85,24 +119,25 @@ export default function CustomizeOrder() {
     let promptForCart: string | undefined = undefined;
 
     if (aiPrompt.trim()) {
+      // Ensure unique ID for each generated AI item added to cart
+      const uniqueAiIdSuffix = aiGeneratedImageUrl ? `-${Date.now()}` : '-placeholder';
       designForCart = { 
-        id: 'ai-generated', 
+        id: `ai-generated${uniqueAiIdSuffix}`, 
         name: 'Diseño Personalizado (IA)', 
-        imgSrc: AI_DESIGN_PLACEHOLDER_IMG,
-        hint: AI_DESIGN_PLACEHOLDER_HINT 
+        imgSrc: aiGeneratedImageUrl || AI_DESIGN_PLACEHOLDER_IMG,
+        hint: aiGeneratedImageUrl ? 'AI generated custom design' : AI_DESIGN_PLACEHOLDER_HINT 
       };
       itemPrice += AI_GENERATED_DESIGN_PRICE_MODIFIER;
       promptForCart = aiPrompt.trim();
     } else if (selectedDesignId) {
       const selectedDesign = designs.find(d => d.id === selectedDesignId);
-      if (!selectedDesign) { // Should not happen
+      if (!selectedDesign) { 
         toast({ title: 'Error', description: 'Diseño seleccionado no válido.', variant: 'destructive' });
         return;
       }
       designForCart = { id: selectedDesign.id, name: selectedDesign.name, imgSrc: selectedDesign.imgSrc, hint: selectedDesign.hint };
       itemPrice += selectedDesign.priceModifier;
     } else {
-       // This case should ideally be prevented by the button's disabled logic
       toast({ title: 'Error', description: 'Debes seleccionar un diseño o describir tu idea.', variant: 'destructive' });
       return;
     }
@@ -112,7 +147,7 @@ export default function CustomizeOrder() {
       color: { id: color.id, name: color.name, hex: color.hex },
       design: designForCart,
       price: itemPrice,
-      ...(promptForCart && { aiPrompt: promptForCart }), // Add aiPrompt if it exists
+      ...(promptForCart && { aiPrompt: promptForCart }), 
     };
 
     addToCart(itemToAdd);
@@ -157,7 +192,6 @@ export default function CustomizeOrder() {
     designPriceString = `+$${finalSelectedDesign.priceModifier}`;
   }
 
-
   return (
     <section id="create-idea" className="py-16 md:py-24 bg-background">
       <div className="container mx-auto px-4">
@@ -165,7 +199,6 @@ export default function CustomizeOrder() {
           Arma tu Pedido Personalizado
         </h2>
 
-        {/* Paso 1: Tipo de Prenda */}
         <div className="mb-12 md:mb-16">
           <SectionTitle title="Elige el Tipo de Prenda" step={1} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -203,7 +236,6 @@ export default function CustomizeOrder() {
           </div>
         </div>
 
-        {/* Paso 2: Elige Color */}
         <div className="mb-12 md:mb-16">
           <SectionTitle title="Selecciona un Color" step={2} />
           <div className="flex flex-wrap gap-4 md:gap-6 justify-center">
@@ -225,7 +257,6 @@ export default function CustomizeOrder() {
           </div>
         </div>
 
-        {/* Paso 3: Escoge Diseño o Describe con IA */}
         <div className="mb-12 md:mb-16">
           <SectionTitle title="Elige o Describe tu Diseño" step={3} />
           <h4 className="text-xl font-body font-semibold text-foreground mb-4">Opción A: Escoge un Diseño Exclusivo</h4>
@@ -264,22 +295,75 @@ export default function CustomizeOrder() {
           </div>
 
           <Separator className="my-8 bg-border/40" />
-          <h4 className="text-xl font-body font-semibold text-foreground mb-4 flex items-center">
-            <Sparkles className="w-5 h-5 mr-2 text-accent" />
-            Opción B: Describe tu idea para nuestro generador IA
-          </h4>
-          <Textarea
-            placeholder="Ej: Un astronauta surfeando en una pizza con temática espacial y colores neón..."
-            value={aiPrompt}
-            onChange={handleAiPromptChange}
-            className="min-h-[100px] text-base border-input focus:ring-accent"
-            rows={4}
-          />
-           {aiPrompt && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Costo adicional por diseño IA: +${AI_GENERATED_DESIGN_PRICE_MODIFIER}
-            </p>
-          )}
+          
+          <div>
+            <h4 className="text-xl font-body font-semibold text-foreground mb-4 flex items-center">
+              <Sparkles className="w-5 h-5 mr-2 text-accent" />
+              Opción B: Describe tu idea para nuestro generador IA
+            </h4>
+            <Textarea
+              placeholder="Ej: Un astronauta surfeando en una pizza con temática espacial y colores neón..."
+              value={aiPrompt}
+              onChange={handleAiPromptChange}
+              className="min-h-[100px] text-base border-input focus:ring-accent bg-card placeholder:text-muted-foreground/70"
+              rows={4}
+            />
+            <Button
+                onClick={handleGenerateAiDesign}
+                disabled={!aiPrompt.trim() || isGeneratingImage}
+                variant="outline"
+                size="sm"
+                className="mt-3 border-accent text-accent hover:bg-accent/10 hover:text-accent"
+              >
+                {isGeneratingImage ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generando Imagen...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generar Diseño con IA
+                  </>
+                )}
+              </Button>
+            {aiPrompt && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Costo adicional por diseño IA: +${AI_GENERATED_DESIGN_PRICE_MODIFIER}
+              </p>
+            )}
+            
+            {(aiPrompt || aiGeneratedImageUrl) && ( // Show preview area if prompt exists or image is generated/loading
+                <div className="mt-4 p-4 border border-dashed border-accent/30 rounded-lg bg-card/30">
+                    <h5 className="text-sm font-body font-semibold text-accent mb-2">Vista Previa Diseño IA</h5>
+                    <div className="flex justify-center items-center w-full max-w-xs mx-auto aspect-square bg-muted/20 rounded-md overflow-hidden">
+                    {isGeneratingImage ? (
+                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
+                            <p className="text-sm">Cargando diseño...</p>
+                        </div>
+                    ) : aiGeneratedImageUrl ? (
+                        <Image
+                            src={aiGeneratedImageUrl}
+                            alt="Diseño generado por IA"
+                            width={250}
+                            height={250}
+                            className="object-contain w-full h-full"
+                        />
+                    ) : (
+                         <Image
+                            src={AI_DESIGN_PLACEHOLDER_IMG}
+                            alt="Placeholder Diseño IA"
+                            width={250}
+                            height={250}
+                            className="object-contain w-full h-full opacity-40"
+                            data-ai-hint={AI_DESIGN_PLACEHOLDER_HINT}
+                          />
+                    )}
+                    </div>
+                </div>
+            )}
+          </div>
         </div>
 
 
@@ -304,7 +388,7 @@ export default function CustomizeOrder() {
           <Button
             size="lg"
             onClick={handleAddToCart}
-            disabled={!isClient || !selectedShirtTypeId || !selectedColorId || (!selectedDesignId && !aiPrompt.trim())}
+            disabled={!isClient || !selectedShirtTypeId || !selectedColorId || (!selectedDesignId && !aiPrompt.trim()) || isGeneratingImage}
             className="w-full font-headline font-bold text-base md:text-lg py-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md shadow-lg hover:shadow-primary/40 transition-all duration-300 disabled:opacity-70"
           >
             <ShoppingCart className="mr-2 h-5 w-5" />
@@ -316,4 +400,3 @@ export default function CustomizeOrder() {
     </section>
   );
 }
-

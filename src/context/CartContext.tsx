@@ -6,19 +6,18 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback } 
 
 // Define the structure of a cart item
 export interface CartItem {
-  id: string; // Composite ID: `${shirtTypeId}-${colorId}-${designIdOrAiIdentifier}`
+  id: string; 
   shirtType: { id: string; name: string; imgSrc: string };
   color: { id: string; name: string; hex: string };
-  design: { id: string; name: string; imgSrc: string; hint?: string }; // hint for data-ai-hint
+  design: { id: string; name: string; imgSrc: string; hint?: string }; 
   quantity: number;
-  price: number; // Price per unit
-  aiPrompt?: string; // Optional field for AI design description
+  price: number; 
+  aiPrompt?: string; 
 }
 
-// Define the shape of the cart context
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity' | 'id'>) => void;
+  addToCart: (item: Omit<CartItem, 'quantity' | 'id'> & { design: { id: string; name: string; imgSrc: string; hint?: string } }) => void;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -28,7 +27,6 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Define actions for the reducer
 type CartAction =
   | { type: 'ADD_ITEM'; payload: CartItem }
   | { type: 'REMOVE_ITEM'; payload: string }
@@ -36,32 +34,22 @@ type CartAction =
   | { type: 'SET_CART'; payload: CartItem[] }
   | { type: 'CLEAR_CART' };
 
-// Reducer function to manage cart state
 const cartReducer = (state: CartItem[], action: CartAction): CartItem[] => {
   switch (action.type) {
     case 'ADD_ITEM': {
-      // For AI prompts, if an item with the same base (shirt, color) and 'ai-generated' design exists,
-      // and the prompt is the same, increment quantity. Otherwise, it's a new item.
-      // For pre-made designs, use the payload.id.
-      const isAiItem = action.payload.design.id === 'ai-generated';
-      const existingItemIndex = state.findIndex(item => {
-        if (isAiItem && item.design.id === 'ai-generated') {
-          return item.shirtType.id === action.payload.shirtType.id &&
-                 item.color.id === action.payload.color.id &&
-                 item.aiPrompt === action.payload.aiPrompt;
-        }
-        return item.id === action.payload.id;
-      });
+      // The ID in action.payload.id is now expected to be unique for each AI generated item.
+      // For standard items, it's shirtType-color-designId.
+      // For AI items, it's shirtType-color-ai-generated-timestamp-promptSnippet (or similar unique structure from CustomizeOrder via addToCart).
+      const existingItemIndex = state.findIndex(item => item.id === action.payload.id);
 
       if (existingItemIndex > -1) {
+        // If item ID is identical (e.g., a pre-made design, or user clicked "add to cart" multiple times for *the exact same* AI generated item which should be rare now)
         return state.map((item, index) =>
           index === existingItemIndex
             ? { ...item, quantity: item.quantity + action.payload.quantity }
             : item
         );
       }
-      // If it's a new item (or AI item with a new prompt/combo), add it.
-      // The ID passed in action.payload should be unique enough (generated in CustomizeOrder).
       return [...state, action.payload];
     }
     case 'REMOVE_ITEM':
@@ -83,7 +71,6 @@ const cartReducer = (state: CartItem[], action: CartAction): CartItem[] => {
 
 const CART_STORAGE_KEY = 'flashprint_cart';
 
-// CartProvider component
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, dispatch] = useReducer(cartReducer, [], () => {
     if (typeof window !== 'undefined') {
@@ -104,29 +91,25 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [cartItems]);
 
-  const addToCart = useCallback((itemData: Omit<CartItem, 'quantity' | 'id'>) => {
-    // Generate a unique ID for the cart item here.
-    // This ID determines if an item is "the same" for quantity updates.
-    let itemId: string;
-    if (itemData.design.id === 'ai-generated' && itemData.aiPrompt) {
-      // For AI items, include a hash or snippet of the prompt for uniqueness, or a timestamp for true uniqueness
-      // For simplicity now, if it's AI, make it unique enough to be a new item unless prompt is identical.
-      // A truly robust hash of the prompt would be better for production.
-      // For this iteration, let's assume CustomizeOrder provides a sufficiently unique ID for AI items if needed,
-      // or that same AI prompt for same base product should increment quantity.
-      // The reducer logic already handles checking aiPrompt for equality for 'ai-generated' designs.
-      itemId = `${itemData.shirtType.id}-${itemData.color.id}-${itemData.design.id}`
-      if (itemData.aiPrompt) { // Append prompt to distinguish between different AI ideas for same base
-         itemId += `-${itemData.aiPrompt.substring(0,10).replace(/\s/g, '')}`; // Basic uniqueness
-      }
+  const addToCart = useCallback((itemData: Omit<CartItem, 'quantity' | 'id'> & { design: { id: string; name: string; imgSrc: string; hint?: string } }) => {
+    // itemData.design.id comes from CustomizeOrder.tsx
+    // For AI designs, it's `ai-generated-${timestamp}`
+    // For pre-made, it's `design1`, etc.
+    
+    let finalItemId: string;
+    if (itemData.design.id.startsWith('ai-generated') && itemData.aiPrompt) {
+      // Append a snippet of the prompt for better human readability in IDs if needed,
+      // but the timestamp in itemData.design.id should ensure uniqueness.
+      const promptSnippet = itemData.aiPrompt.substring(0,15).replace(/\s/g, '');
+      finalItemId = `${itemData.shirtType.id}-${itemData.color.id}-${itemData.design.id}-${promptSnippet}`;
     } else {
-      itemId = `${itemData.shirtType.id}-${itemData.color.id}-${itemData.design.id}`;
+      finalItemId = `${itemData.shirtType.id}-${itemData.color.id}-${itemData.design.id}`;
     }
     
     const newItem: CartItem = {
       ...itemData,
-      id: itemId, 
-      quantity: 1, // Always add one unit at a time by default
+      id: finalItemId, 
+      quantity: 1, 
     };
     dispatch({ type: 'ADD_ITEM', payload: newItem });
   }, []);
@@ -160,7 +143,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Custom hook to use the CartContext
 export const useCart = () => {
   const context = useContext(CartContext);
   if (context === undefined) {
@@ -168,4 +150,3 @@ export const useCart = () => {
   }
   return context;
 };
-
