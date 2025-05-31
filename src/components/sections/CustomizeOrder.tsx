@@ -5,10 +5,11 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, ShoppingCart, ArrowRight } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea'; // Import Textarea
+import { CheckCircle2, ShoppingCart, ArrowRight, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { useCart } from '@/context/CartContext'; // Import useCart
+import { useCart } from '@/context/CartContext';
 
 const shirtTypes = [
   { id: 'short-sleeve', name: 'Manga Corta', imgSrc: 'https://placehold.co/300x400.png', hint: 'shortsleeve shirt', price: 20 },
@@ -30,25 +31,40 @@ const designs = [
   { id: 'design5', name: 'Ilustración Naturaleza Fresca', imgSrc: 'https://placehold.co/250x250.png', hint: 'nature illustration', priceModifier: 6 },
 ];
 
+const AI_GENERATED_DESIGN_PRICE_MODIFIER = 7; // Price modifier for AI generated designs
+const AI_DESIGN_PLACEHOLDER_IMG = 'https://placehold.co/250x250.png?text=AI+Design';
+const AI_DESIGN_PLACEHOLDER_HINT = 'AI custom design';
+
 export default function CustomizeOrder() {
   const [selectedShirtTypeId, setSelectedShirtTypeId] = useState<string | null>(null);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
   const [selectedDesignId, setSelectedDesignId] = useState<string | null>(null);
+  const [aiPrompt, setAiPrompt] = useState<string>('');
   const [isClient, setIsClient] = useState(false);
 
   const { toast } = useToast();
-  const { addToCart } = useCart(); // Get addToCart from useCart
+  const { addToCart } = useCart();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  const handleSelectDesign = (designId: string) => {
+    setSelectedDesignId(designId);
+    setAiPrompt(''); // Clear AI prompt when a pre-made design is selected
+  };
+
+  const handleAiPromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setAiPrompt(event.target.value);
+    setSelectedDesignId(null); // Clear pre-made design selection when AI prompt is typed
+  };
+
   const handleAddToCart = () => {
-    if (!selectedShirtTypeId || !selectedColorId || !selectedDesignId) {
+    if (!selectedShirtTypeId || !selectedColorId || (!selectedDesignId && !aiPrompt.trim())) {
       if (isClient) {
         toast({
           title: '¡Completa tu selección!',
-          description: 'Por favor, elige tipo de prenda, color y diseño para continuar.',
+          description: 'Por favor, elige tipo de prenda, color y un diseño o describe tu idea.',
           variant: 'destructive',
           duration: 3000,
         });
@@ -58,25 +74,45 @@ export default function CustomizeOrder() {
 
     const shirtType = shirtTypes.find(st => st.id === selectedShirtTypeId);
     const color = colors.find(c => c.id === selectedColorId);
-    const design = designs.find(d => d.id === selectedDesignId);
-
-    if (!shirtType || !color || !design) {
-        toast({
-          title: 'Error en la selección',
-          description: 'Alguno de los elementos seleccionados no es válido.',
-          variant: 'destructive',
-          duration: 3000,
-        });
+    
+    if (!shirtType || !color) { // Should not happen if button is enabled correctly
+        toast({ title: 'Error', description: 'Tipo de prenda o color no válido.', variant: 'destructive' });
         return;
     }
-    
-    const itemPrice = shirtType.price + design.priceModifier;
 
+    let designForCart: { id: string; name: string; imgSrc: string; hint?: string };
+    let itemPrice = shirtType.price;
+    let promptForCart: string | undefined = undefined;
+
+    if (aiPrompt.trim()) {
+      designForCart = { 
+        id: 'ai-generated', 
+        name: 'Diseño Personalizado (IA)', 
+        imgSrc: AI_DESIGN_PLACEHOLDER_IMG,
+        hint: AI_DESIGN_PLACEHOLDER_HINT 
+      };
+      itemPrice += AI_GENERATED_DESIGN_PRICE_MODIFIER;
+      promptForCart = aiPrompt.trim();
+    } else if (selectedDesignId) {
+      const selectedDesign = designs.find(d => d.id === selectedDesignId);
+      if (!selectedDesign) { // Should not happen
+        toast({ title: 'Error', description: 'Diseño seleccionado no válido.', variant: 'destructive' });
+        return;
+      }
+      designForCart = { id: selectedDesign.id, name: selectedDesign.name, imgSrc: selectedDesign.imgSrc, hint: selectedDesign.hint };
+      itemPrice += selectedDesign.priceModifier;
+    } else {
+       // This case should ideally be prevented by the button's disabled logic
+      toast({ title: 'Error', description: 'Debes seleccionar un diseño o describir tu idea.', variant: 'destructive' });
+      return;
+    }
+    
     const itemToAdd = {
       shirtType: { id: shirtType.id, name: shirtType.name, imgSrc: shirtType.imgSrc },
       color: { id: color.id, name: color.name, hex: color.hex },
-      design: { id: design.id, name: design.name, imgSrc: design.imgSrc },
+      design: designForCart,
       price: itemPrice,
+      ...(promptForCart && { aiPrompt: promptForCart }), // Add aiPrompt if it exists
     };
 
     addToCart(itemToAdd);
@@ -86,17 +122,14 @@ export default function CustomizeOrder() {
         title: '¡Producto Agregado al Carrito!',
         description: (
           <div>
-            <p><strong>{shirtType.name} - {color.name} - {design.name}</strong></p>
+            <p><strong>{shirtType.name} - {color.name} - {designForCart.name}</strong></p>
+            {promptForCart && <p className="text-xs">Tu idea: {promptForCart.substring(0,50)}...</p>}
             <p>Personalización añadida correctamente.</p>
           </div>
         ),
         duration: 3000,
       });
     }
-    // Optionally reset selections
-    // setSelectedShirtTypeId(null);
-    // setSelectedColorId(null);
-    // setSelectedDesignId(null);
   };
   
   const SectionTitle: React.FC<{ title: string; step: number }> = ({ title, step }) => (
@@ -108,7 +141,22 @@ export default function CustomizeOrder() {
 
   const selectedShirtType = shirtTypes.find(st => st.id === selectedShirtTypeId);
   const selectedColor = colors.find(c => c.id === selectedColorId);
-  const selectedDesign = designs.find(d => d.id === selectedDesignId);
+  const finalSelectedDesign = designs.find(d => d.id === selectedDesignId);
+
+  let currentPrice = selectedShirtType?.price || 0;
+  let designSummaryName = 'No seleccionado';
+  let designPriceString = '';
+
+  if (aiPrompt.trim()) {
+    currentPrice += AI_GENERATED_DESIGN_PRICE_MODIFIER;
+    designSummaryName = `Diseño IA: "${aiPrompt.trim().substring(0, 30)}..."`;
+    designPriceString = `+$${AI_GENERATED_DESIGN_PRICE_MODIFIER}`;
+  } else if (finalSelectedDesign) {
+    currentPrice += finalSelectedDesign.priceModifier;
+    designSummaryName = finalSelectedDesign.name;
+    designPriceString = `+$${finalSelectedDesign.priceModifier}`;
+  }
+
 
   return (
     <section id="create-idea" className="py-16 md:py-24 bg-background">
@@ -177,14 +225,15 @@ export default function CustomizeOrder() {
           </div>
         </div>
 
-        {/* Paso 3: Escoge Diseño */}
+        {/* Paso 3: Escoge Diseño o Describe con IA */}
         <div className="mb-12 md:mb-16">
-          <SectionTitle title="Escoge un Diseño Exclusivo (Precio Adicional)" step={3} />
+          <SectionTitle title="Elige o Describe tu Diseño" step={3} />
+          <h4 className="text-xl font-body font-semibold text-foreground mb-4">Opción A: Escoge un Diseño Exclusivo</h4>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
             {designs.map((design) => (
               <Card
                 key={design.id}
-                onClick={() => setSelectedDesignId(design.id)}
+                onClick={() => handleSelectDesign(design.id)}
                 className={`cursor-pointer transition-all duration-300 ease-in-out transform hover:shadow-primary/30 hover:-translate-y-1 rounded-xl overflow-hidden group ${
                   selectedDesignId === design.id ? 'ring-4 ring-primary shadow-primary/20' : 'ring-1 ring-border hover:ring-primary/50'
                 } bg-card`}
@@ -213,19 +262,39 @@ export default function CustomizeOrder() {
               </Card>
             ))}
           </div>
+
+          <Separator className="my-8 bg-border/40" />
+          <h4 className="text-xl font-body font-semibold text-foreground mb-4 flex items-center">
+            <Sparkles className="w-5 h-5 mr-2 text-primary" />
+            Opción B: Describe tu idea para nuestro generador IA
+          </h4>
+          <Textarea
+            placeholder="Ej: Un astronauta surfeando en una pizza con temática espacial y colores neón..."
+            value={aiPrompt}
+            onChange={handleAiPromptChange}
+            className="min-h-[100px] text-base border-input focus:ring-primary"
+            rows={4}
+          />
+           {aiPrompt && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Costo adicional por diseño IA: +${AI_GENERATED_DESIGN_PRICE_MODIFIER}
+            </p>
+          )}
         </div>
+
 
         <Separator className="my-12 md:my-16 bg-border/60" />
         <div className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border">
           <h3 className="text-2xl md:text-3xl font-headline font-semibold text-center text-primary mb-6">Resumen de tu Selección</h3>
-          {selectedShirtType || selectedColor || selectedDesign ? (
+          {selectedShirtType || selectedColor || finalSelectedDesign || aiPrompt.trim() ? (
             <div className="space-y-3 mb-8 text-center font-body text-muted-foreground">
               <p><strong>Tipo de Prenda:</strong> {selectedShirtType?.name || 'No seleccionado'} ({selectedShirtType ? `$${selectedShirtType.price}` : ''})</p>
               <p><strong>Color:</strong> {selectedColor?.name || 'No seleccionado'}</p>
-              <p><strong>Diseño:</strong> {selectedDesign?.name || 'No seleccionado'} ({selectedDesign ? `+$${selectedDesign.priceModifier}` : ''})</p>
-              {selectedShirtType && selectedDesign && (
+              <p><strong>Diseño:</strong> {designSummaryName} {designPriceString && `(${designPriceString})`}</p>
+              
+              {(selectedShirtType && (finalSelectedDesign || aiPrompt.trim())) && (
                 <p className="text-lg font-bold text-foreground mt-2">
-                  Precio Unitario Estimado: ${selectedShirtType.price + selectedDesign.priceModifier}
+                  Precio Unitario Estimado: ${currentPrice.toFixed(2)}
                 </p>
               )}
             </div>
@@ -235,7 +304,7 @@ export default function CustomizeOrder() {
           <Button
             size="lg"
             onClick={handleAddToCart}
-            disabled={!isClient || !selectedShirtTypeId || !selectedColorId || !selectedDesignId}
+            disabled={!isClient || !selectedShirtTypeId || !selectedColorId || (!selectedDesignId && !aiPrompt.trim())}
             className="w-full font-headline font-bold text-base md:text-lg py-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md shadow-lg hover:shadow-primary/40 transition-all duration-300 disabled:opacity-70"
           >
             <ShoppingCart className="mr-2 h-5 w-5" />
@@ -247,3 +316,4 @@ export default function CustomizeOrder() {
     </section>
   );
 }
+

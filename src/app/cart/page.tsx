@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, PlusCircle, MinusCircle, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Trash2, PlusCircle, MinusCircle, ShoppingBag, ArrowLeft, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 
@@ -82,18 +82,27 @@ export default function CartPage() {
             <Card key={item.id} className="flex flex-col sm:flex-row overflow-hidden shadow-lg border-border bg-card">
               <div className="relative w-full sm:w-1/3 md:w-1/4 aspect-square sm:aspect-[3/4] flex-shrink-0">
                 <Image
-                  src={item.shirtType.imgSrc} // Using shirt type image for cart
+                  src={item.design.imgSrc} 
                   alt={`${item.shirtType.name} - ${item.color.name} - ${item.design.name}`}
                   fill
                   sizes="(max-width: 640px) 100vw, 33vw"
                   className="object-cover"
-                  data-ai-hint={item.shirtType.id.includes('short') ? 'shortsleeve shirt' : 'longsleeve shirt'}
+                  data-ai-hint={item.design.hint || (item.shirtType.id.includes('short') ? 'shortsleeve shirt' : 'longsleeve shirt')}
                 />
               </div>
               <div className="p-5 flex flex-col flex-grow">
                 <h2 className="text-lg md:text-xl font-headline font-semibold text-foreground">{item.shirtType.name}</h2>
                 <p className="text-sm text-muted-foreground">Color: {item.color.name}</p>
-                <p className="text-sm text-muted-foreground">Diseño: {item.design.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  Diseño: {item.design.name}
+                  {item.design.id === 'ai-generated' && <Sparkles className="inline-block w-4 h-4 ml-1 text-primary" />}
+                </p>
+                {item.aiPrompt && (
+                  <div className="mt-1 p-2 bg-muted/30 rounded-md">
+                    <p className="text-xs font-semibold text-primary flex items-center"><Sparkles className="w-3 h-3 mr-1.5"/> Tu idea para IA:</p>
+                    <p className="text-xs text-muted-foreground italic break-words">&quot;{item.aiPrompt}&quot;</p>
+                  </div>
+                )}
                 <p className="text-lg font-semibold text-primary mt-2 sm:mt-auto">${(item.price * item.quantity).toFixed(2)}</p>
                  <div className="flex items-center space-x-3 mt-3">
                   <Button variant="outline" size="icon" onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)} aria-label="Reducir cantidad">
