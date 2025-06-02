@@ -33,7 +33,7 @@ const designs = [
 ];
 
 const AI_GENERATED_DESIGN_PRICE_MODIFIER = 7; 
-const AI_DESIGN_PLACEHOLDER_IMG = 'https://placehold.co/250x250.png'; // Removed text to have a cleaner placeholder
+const AI_DESIGN_PLACEHOLDER_IMG = 'https://placehold.co/250x250.png'; 
 const AI_DESIGN_PLACEHOLDER_HINT = 'AI custom design';
 
 export default function CustomizeOrder() {
@@ -55,13 +55,13 @@ export default function CustomizeOrder() {
   const handleSelectDesign = (designId: string) => {
     setSelectedDesignId(designId);
     setAiPrompt(''); 
-    setAiGeneratedImageUrl(null); // Clear AI image if a pre-made design is selected
+    setAiGeneratedImageUrl(null); 
   };
 
   const handleAiPromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setAiPrompt(event.target.value);
     setSelectedDesignId(null); 
-    setAiGeneratedImageUrl(null); // Clear AI image if prompt changes
+    setAiGeneratedImageUrl(null); 
   };
 
   const handleGenerateAiDesign = async () => {
@@ -119,7 +119,6 @@ export default function CustomizeOrder() {
     let promptForCart: string | undefined = undefined;
 
     if (aiPrompt.trim()) {
-      // Ensure unique ID for each generated AI item added to cart
       const uniqueAiIdSuffix = aiGeneratedImageUrl ? `-${Date.now()}` : '-placeholder';
       designForCart = { 
         id: `ai-generated${uniqueAiIdSuffix}`, 
@@ -143,7 +142,8 @@ export default function CustomizeOrder() {
     }
     
     const itemToAdd = {
-      shirtType: { id: shirtType.id, name: shirtType.name, imgSrc: shirtType.imgSrc },
+      imageSrc: selectedDesignId === 'ai' && aiGeneratedImageUrl ? aiGeneratedImageUrl : designForCart.imgSrc,
+      shirtType: { id: shirtType.id, name: shirtType.name }, 
       color: { id: color.id, name: color.name, hex: color.hex },
       design: designForCart,
       price: itemPrice,
@@ -195,7 +195,7 @@ export default function CustomizeOrder() {
   return (
     <section id="create-idea" className="py-16 md:py-24 bg-background">
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl md:text-5xl font-headline font-bold text-center text-primary mb-16">
+        <h2 className="text-4xl md:text-5xl font-headline font-bold text-center text-primary mb-12 md:mb-16">
           Arma tu Pedido Personalizado
         </h2>
 
@@ -203,7 +203,7 @@ export default function CustomizeOrder() {
           <SectionTitle title="Elige el Tipo de Prenda" step={1} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {shirtTypes.map((type) => (
-              <Card
+              <Card 
                 key={type.id}
                 onClick={() => setSelectedShirtTypeId(type.id)}
                 className={`cursor-pointer transition-all duration-300 ease-in-out transform hover:shadow-accent/30 hover:-translate-y-1 rounded-xl overflow-hidden ${
@@ -239,12 +239,12 @@ export default function CustomizeOrder() {
         <div className="mb-12 md:mb-16">
           <SectionTitle title="Selecciona un Color" step={2} />
           <div className="flex flex-wrap gap-4 md:gap-6 justify-center">
-            {colors.map((color) => (
+            {colors.map((color) => ( 
               <button
                 key={color.id}
                 onClick={() => setSelectedColorId(color.id)}
                 aria-label={`Seleccionar color ${color.name}`}
-                className={`w-12 h-12 md:w-16 md:h-16 rounded-full cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-110 shadow-md ${color.twClass} ${color.borderClass || ''} ${
+                className={`w-12 h-12 md:w-16 md:h-16 rounded-full cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-110 shadow-md ${color.twClass} ${color.id === 'black' || color.id === 'white' ? color.borderClass : ''} ${
                   selectedColorId === color.id ? 'ring-4 ring-offset-2 ring-accent ring-offset-background' : 'ring-1 ring-border'
                 }`}
                 style={{ backgroundColor: color.hex }}
@@ -333,7 +333,7 @@ export default function CustomizeOrder() {
               </p>
             )}
             
-            {(aiPrompt || aiGeneratedImageUrl) && ( // Show preview area if prompt exists or image is generated/loading
+            {(aiPrompt || aiGeneratedImageUrl) && ( 
                 <div className="mt-4 p-4 border border-dashed border-accent/30 rounded-lg bg-card/30">
                     <h5 className="text-sm font-body font-semibold text-accent mb-2">Vista Previa Diseño IA</h5>
                     <div className="flex justify-center items-center w-full max-w-xs mx-auto aspect-square bg-muted/20 rounded-md overflow-hidden">
@@ -368,7 +368,7 @@ export default function CustomizeOrder() {
 
 
         <Separator className="my-12 md:my-16 bg-border/60" />
-        <div className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border">
+        <div className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border sticky top-24 z-10">
           <h3 className="text-2xl md:text-3xl font-headline font-semibold text-center text-primary mb-6">Resumen de tu Selección</h3>
           {selectedShirtType || selectedColor || finalSelectedDesign || aiPrompt.trim() ? (
             <div className="space-y-3 mb-8 text-center font-body text-muted-foreground">
@@ -400,3 +400,4 @@ export default function CustomizeOrder() {
     </section>
   );
 }
+
