@@ -63,7 +63,7 @@ export default function CartPage() {
         message += `  Tu idea para el diseño IA: "${item.aiPrompt}"\n`;
       }
     });
-    message += `\nSubtotal: $${getCartTotal().toFixed(2)}\n\n`;
+    message += `\nSubtotal: $${getCartTotal().toLocaleString('es-CO')}\n\n`;
     message += "¡Gracias por tu pedido!";
     return encodeURIComponent(message);
   }, [cartItems, getCartTotal]);
@@ -126,7 +126,7 @@ export default function CartPage() {
                     <p className="text-xs text-muted-foreground italic break-words">&quot;{item.aiPrompt}&quot;</p>
                   </div>
                 )}
-                <p className="text-lg font-semibold text-primary mt-2 sm:mt-auto">${(item.price * item.quantity).toFixed(2)}</p>
+                <p className="text-lg font-semibold text-primary mt-2 sm:mt-auto">${(item.price * item.quantity).toLocaleString('es-CO')}</p>
                  <div className="flex items-center space-x-3 mt-3">
                   <Button variant="outline" size="icon" onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)} aria-label="Reducir cantidad">
                     <MinusCircle className="h-5 w-5" />
@@ -169,7 +169,7 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between font-body">
                 <span className="text-muted-foreground">Subtotal ({getItemCount()} items):</span>
-                <span className="font-semibold text-foreground">${getCartTotal().toFixed(2)}</span>
+                <span className="font-semibold text-foreground">${getCartTotal().toLocaleString('es-CO')}</span>
               </div>
               <div className="flex justify-between font-body">
                 <span className="text-muted-foreground">Envío:</span>
@@ -178,7 +178,7 @@ export default function CartPage() {
               <Separator className="my-4 bg-border/60" />
               <div className="flex justify-between font-body text-xl md:text-2xl">
                 <span className="font-bold text-foreground">Total Estimado:</span>
-                <span className="font-bold text-primary">${getCartTotal().toFixed(2)}</span>
+                <span className="font-bold text-primary">${getCartTotal().toLocaleString('es-CO')}</span>
               </div>
             </CardContent>
             <CardFooter className="flex-col space-y-3">

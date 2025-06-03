@@ -14,9 +14,9 @@ import { generateDesign } from '@/ai/flows/generate-design-flow';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const productTypes = [
- { id: 'short-sleeve', name: 'Manga Corta', imgSrc: '/camisetas/cnegramangacorta.png', hint: 'shortsleeve shirt', price: 20, hasSizes: true },
- { id: 'long-sleeve', name: 'Manga Larga', imgSrc: '/camisetas/cnegramangalarga.png', hint: 'longsleeve shirt', price: 25, hasSizes: true },
- { id: 'cap-printed', name: 'Gorra Estampada', imgSrc: '/camisetas/gorra.png', hint: 'cap design', price: 18, hasSizes: false },
+ { id: 'short-sleeve', name: 'Manga Corta', imgSrc: '/camisetas/cnegramangacorta.png', hint: 'shortsleeve shirt', price: 50000, hasSizes: true },
+ { id: 'long-sleeve', name: 'Manga Larga', imgSrc: '/camisetas/cnegramangalarga.png', hint: 'longsleeve shirt', price: 65000, hasSizes: true },
+ { id: 'cap-printed', name: 'Gorra Estampada', imgSrc: '/camisetas/gorra.png', hint: 'cap design', price: 30000, hasSizes: false },
 ];
 
 const sizes = [
@@ -34,14 +34,14 @@ const colors = [
 ];
 
 const designs = [
-  { id: 'design1', name: 'Diseño Abstracto Caballo', imgSrc: '/disenios/caballopunk.png', hint: 'abstract design', priceModifier: 5 },
-  { id: 'design2', name: 'Patrón Gráfico Urbano', imgSrc: '/disenios/rikymorty.png', hint: 'graphic pattern', priceModifier: 5 },
-  { id: 'design3', name: 'Arte Minimalista Elegante', imgSrc: '/disenios/spider.png', hint: 'minimalist art', priceModifier: 3 },
-  { id: 'design4', name: 'Logo Vintage Clásico', imgSrc: '/disenios/onepushman.png', hint: 'vintage logo', priceModifier: 4 },
-  { id: 'design5', name: 'Ilustración Naturaleza Fresca', imgSrc: '/disenios/gym.png', hint: 'nature illustration', priceModifier: 6 },
+  { id: 'design1', name: 'Diseño Abstracto Caballo', imgSrc: '/disenios/caballopunk.png', hint: 'abstract design', priceModifier: 0 },
+  { id: 'design2', name: 'Patrón Gráfico Urbano', imgSrc: '/disenios/rikymorty.png', hint: 'graphic pattern', priceModifier: 0 },
+  { id: 'design3', name: 'Arte Minimalista Elegante', imgSrc: '/disenios/spider.png', hint: 'minimalist art', priceModifier: 0 },
+  { id: 'design4', name: 'Logo Vintage Clásico', imgSrc: '/disenios/onepushman.png', hint: 'vintage logo', priceModifier: 0 },
+  { id: 'design5', name: 'Ilustración Naturaleza Fresca', imgSrc: '/disenios/gym.png', hint: 'nature illustration', priceModifier: 0 },
 ];
 
-const AI_GENERATED_DESIGN_PRICE_MODIFIER = 7;
+const AI_GENERATED_DESIGN_PRICE_MODIFIER = 0;
 const AI_DESIGN_PLACEHOLDER_IMG = 'https://placehold.co/250x250.png';
 const AI_DESIGN_PLACEHOLDER_HINT = 'AI custom design';
 
@@ -275,11 +275,11 @@ export default function CustomizeOrder() {
   if (aiPrompt.trim() && aiGeneratedImageUrl) {
     currentPrice += AI_GENERATED_DESIGN_PRICE_MODIFIER;
     designSummaryName = `Diseño IA: "${aiPrompt.trim().substring(0, 30)}..."`;
-    designPriceString = `+$${AI_GENERATED_DESIGN_PRICE_MODIFIER.toFixed(2)}`;
+    designPriceString = AI_GENERATED_DESIGN_PRICE_MODIFIER > 0 ? `+$${AI_GENERATED_DESIGN_PRICE_MODIFIER.toFixed(2)}` : '';
   } else if (finalSelectedDesign) {
     currentPrice += finalSelectedDesign.priceModifier;
     designSummaryName = finalSelectedDesign.name;
-    designPriceString = `+$${finalSelectedDesign.priceModifier.toFixed(2)}`;
+    designPriceString = finalSelectedDesign.priceModifier > 0 ? `+$${finalSelectedDesign.priceModifier.toFixed(2)}` : '';
   }
 
   let stepCounter = 1;
@@ -331,7 +331,7 @@ export default function CustomizeOrder() {
                       )}
                        <div className="p-5 bg-card/80 backdrop-blur-sm">
                         <h4 className="text-xl font-body font-bold text-center text-foreground group-hover:text-primary transition-colors">{type.name}</h4>
-                        <p className="text-center text-sm text-muted-foreground">${type.price.toFixed(2)}</p>
+                        <p className="text-center text-sm text-muted-foreground">${type.price.toLocaleString('es-CO')}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -422,7 +422,7 @@ export default function CustomizeOrder() {
                         )}
                         <div className="p-3 bg-card/80 backdrop-blur-sm">
                           <p className="text-xs md:text-sm font-body text-center text-foreground truncate group-hover:text-primary transition-colors">{design.name}</p>
-                           <p className="text-center text-xs text-muted-foreground">+${design.priceModifier.toFixed(2)}</p>
+                           {design.priceModifier > 0 && <p className="text-center text-xs text-muted-foreground">+${design.priceModifier.toLocaleString('es-CO')}</p>}
                         </div>
                       </CardContent>
                     </Card>
@@ -478,9 +478,9 @@ export default function CustomizeOrder() {
                         </>
                       )}
                     </Button>
-                  {aiPrompt.trim() && ( 
+                  {aiPrompt.trim() && AI_GENERATED_DESIGN_PRICE_MODIFIER > 0 && ( 
                     <p className="text-xs text-muted-foreground mt-2">
-                      Costo adicional por diseño IA: +${AI_GENERATED_DESIGN_PRICE_MODIFIER.toFixed(2)}
+                      Costo adicional por diseño IA: +${AI_GENERATED_DESIGN_PRICE_MODIFIER.toLocaleString('es-CO')}
                     </p>
                   )}
 
@@ -535,14 +535,14 @@ export default function CustomizeOrder() {
               <h3 className="text-2xl md:text-3xl font-headline font-semibold text-center text-primary mb-6">Resumen de tu Selección</h3>
               {selectedProductType || selectedColor || finalSelectedDesign || (aiPrompt.trim() && aiGeneratedImageUrl) ? (
                 <div className="space-y-3 mb-8 text-center font-body text-muted-foreground">
-                  <p><strong>Tipo de Prenda:</strong> {selectedProductType?.name || 'No seleccionado'} ({selectedProductType ? `$${selectedProductType.price.toFixed(2)}` : ''})</p>
+                  <p><strong>Tipo de Prenda:</strong> {selectedProductType?.name || 'No seleccionado'} ({selectedProductType ? `$${selectedProductType.price.toLocaleString('es-CO')}` : ''})</p>
                   {selectedProductType?.hasSizes && <p><strong>Talla:</strong> {currentSelectedSize?.name || 'No seleccionada'}</p>}
                   <p><strong>Color:</strong> {selectedColor?.name || 'No seleccionado'}</p>
                   <p><strong>Diseño:</strong> {designSummaryName} {designPriceString && `(${designPriceString})`}</p>
 
                   {(selectedProductType && (finalSelectedDesign || (aiPrompt.trim() && aiGeneratedImageUrl))) && (
                     <p className="text-lg font-bold text-foreground mt-2">
-                      Precio Unitario Estimado: ${currentPrice.toFixed(2)}
+                      Precio Unitario Estimado: ${currentPrice.toLocaleString('es-CO')}
                     </p>
                   )}
                 </div>
