@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -79,6 +79,7 @@ export default function CustomizeOrder() {
       if (selectedProductType?.hasSizes && sizeSectionRef.current) {
         scrollToSection(sizeSectionRef);
       } else if (!selectedProductType?.hasSizes && colorSectionRef.current) {
+        // If no sizes, scroll directly to color section
         scrollToSection(colorSectionRef);
       }
     }
@@ -200,7 +201,7 @@ export default function CustomizeOrder() {
     const sizeObject = selectedProductType?.hasSizes && selectedSize ? sizes.find(s => s.id === selectedSize) : undefined;
     const color = colors.find(c => c.id === selectedColorId);
 
-    if (!productType || !color || (selectedProductType?.hasSizes && !sizeObject) ) {
+    if (!productType || !color || (selectedProductType?.hasSizes && !sizeObject && selectedProductType.id !== 'cap-printed') ) { // Adjusted condition for cap
         toast({ title: 'Error', description: 'Tipo de prenda, talla o color no válido.', variant: 'destructive' });
         return;
     }
@@ -234,7 +235,7 @@ export default function CustomizeOrder() {
 
     const itemToAdd = {
       shirtType: { id: productType.id, name: productType.name, imgSrc: productType.imgSrc },
-      ...(sizeObject && { size: sizeObject }), // Add size only if it exists
+      ...(sizeObject && { size: sizeObject }), 
       color: { id: color.id, name: color.name, hex: color.hex },
       design: designForCart,
       price: itemPrice,
@@ -282,6 +283,14 @@ export default function CustomizeOrder() {
   }
 
   let stepCounter = 1;
+
+  const colorsToDisplay = useMemo(() => {
+    if (selectedProductType?.id === 'cap-printed') {
+      return colors.filter(color => color.id === 'black' || color.id === 'white');
+    }
+    return colors;
+  }, [selectedProductType]);
+
 
   return (
     <section id="create-idea" className="py-16 md:py-24 bg-background">
@@ -358,7 +367,7 @@ export default function CustomizeOrder() {
               <div ref={colorSectionRef} className="scroll-mt-24">
                 <SectionTitle title="Selecciona un Color" step={selectedProductType?.hasSizes ? stepCounter : stepCounter++} />
                 <div className="flex flex-wrap gap-4 md:gap-6 justify-center">
-                  {colors.map((color) => (
+                  {colorsToDisplay.map((color) => (
                     <button
                       key={color.id}
                       onClick={() => handleSelectColor(color.id)}
