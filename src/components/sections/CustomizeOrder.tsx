@@ -59,6 +59,7 @@ export default function CustomizeOrder() {
   const sizeSectionRef = useRef<HTMLDivElement>(null);
   const colorSectionRef = useRef<HTMLDivElement>(null);
   const designSectionRef = useRef<HTMLDivElement>(null);
+  const summarySectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -67,44 +68,74 @@ export default function CustomizeOrder() {
   const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
     setTimeout(() => {
       ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    }, 100); // Small delay to ensure the section is rendered
   };
+
+  // Scroll to Size section when shirt type is selected
+  useEffect(() => {
+    if (selectedShirtTypeId && sizeSectionRef.current) {
+      scrollToSection(sizeSectionRef);
+    }
+  }, [selectedShirtTypeId]);
+
+  // Scroll to Color section when size is selected
+  useEffect(() => {
+    if (selectedShirtTypeId && selectedSize && colorSectionRef.current) {
+      scrollToSection(colorSectionRef);
+    }
+  }, [selectedSize, selectedShirtTypeId]);
+
+  // Scroll to Design section when color is selected
+  useEffect(() => {
+    if (selectedShirtTypeId && selectedSize && selectedColorId && designSectionRef.current) {
+      scrollToSection(designSectionRef);
+    }
+  }, [selectedColorId, selectedSize, selectedShirtTypeId]);
+  
+  // Scroll to Summary section when design is selected or AI image is generated
+  useEffect(() => {
+    if (
+      selectedShirtTypeId &&
+      selectedSize &&
+      selectedColorId &&
+      (selectedDesignId || aiGeneratedImageUrl) &&
+      summarySectionRef.current
+    ) {
+      scrollToSection(summarySectionRef);
+    }
+  }, [selectedDesignId, aiGeneratedImageUrl, selectedColorId, selectedSize, selectedShirtTypeId]);
+
 
   const handleSelectShirtType = (shirtTypeId: string) => {
     setSelectedShirtTypeId(shirtTypeId);
+    // Reset subsequent selections
     setSelectedSize(null); 
     setSelectedColorId(null);
     setSelectedDesignId(null);
     setAiPrompt('');
     setAiGeneratedImageUrl(null);
-    if (sizeSectionRef.current) {
-      scrollToSection(sizeSectionRef);
-    }
   };
 
   const handleSelectSize = (sizeId: string) => {
     setSelectedSize(sizeId);
-    if (colorSectionRef.current) {
-      scrollToSection(colorSectionRef);
-    }
   };
   
   const handleSelectColor = (colorId: string) => {
     setSelectedColorId(colorId);
-    if (designSectionRef.current) {
-      scrollToSection(designSectionRef);
-    }
   };
 
   const handleSelectDesign = (designId: string) => {
     setSelectedDesignId(designId);
-    setAiPrompt('');
-    setAiGeneratedImageUrl(null);
+    setAiPrompt(''); // Clear AI prompt if a predefined design is selected
+    setAiGeneratedImageUrl(null); // Clear AI image if a predefined design is selected
   };
 
   const handleAiPromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setAiPrompt(event.target.value);
-    setSelectedDesignId(null); 
+    if (event.target.value.trim()) {
+      setSelectedDesignId(null); // Clear predefined design if user types in AI prompt
+      // Do not clear aiGeneratedImageUrl here, allow user to re-generate or keep previous.
+    }
   };
 
   const handleGenerateAiDesign = async () => {
@@ -113,11 +144,12 @@ export default function CustomizeOrder() {
       return;
     }
     setIsGeneratingImage(true);
+    setAiGeneratedImageUrl(null); // Clear previous image before generating new one
+    setSelectedDesignId(null); // Ensure predefined design is deselected
     try {
       const result = await generateDesign({ prompt: aiPrompt.trim() });
       if (result.imageDataUri) {
         setAiGeneratedImageUrl(result.imageDataUri);
-        setSelectedDesignId(null); 
         toast({ title: "¡Diseño IA Generado!", description: "Tu imagen personalizada ha sido creada.", duration: 3000 });
       } else {
         throw new Error("No se recibió imagen del flujo de Genkit.");
@@ -260,7 +292,7 @@ export default function CustomizeOrder() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-8 md:gap-x-12">
           <div className="lg:col-span-2 space-y-12 md:space-y-16">
             {/* Sección Tipo de Prenda */}
-            <div className="scroll-mt-24">
+            <div className="scroll-mt-24"> {/* No ref needed here as it's the first section */}
               <SectionTitle title="Elige el Tipo de Prenda" step={1} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                 {shirtTypes.map((type) => (
@@ -321,7 +353,7 @@ export default function CustomizeOrder() {
             )}
 
             {/* Sección Color */}
-            {selectedSize && selectedShirtTypeId && (
+            {selectedShirtTypeId && selectedSize && (
               <div ref={colorSectionRef} className="scroll-mt-24">
                 <SectionTitle title="Selecciona un Color" step={3} />
                 <div className="flex flex-wrap gap-4 md:gap-6 justify-center">
@@ -349,7 +381,7 @@ export default function CustomizeOrder() {
             )}
 
             {/* Sección Diseño */}
-            {selectedColorId && selectedSize && selectedShirtTypeId && (
+            {selectedShirtTypeId && selectedSize && selectedColorId && (
               <div ref={designSectionRef} className="scroll-mt-24">
                 <SectionTitle title="Elige o Describe tu Diseño" step={4} />
                 <h4 className="text-xl font-body font-semibold text-foreground mb-4">Opción A: Escoge un Diseño Exclusivo</h4>
@@ -467,7 +499,7 @@ export default function CustomizeOrder() {
 
           {/* Columna del Resumen */}
           <div className="lg:col-span-1 mt-12 lg:mt-0 sticky top-24 z-10 self-start">
-            <div className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border">
+            <div ref={summarySectionRef} className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border scroll-mt-24">
               <h3 className="text-2xl md:text-3xl font-headline font-semibold text-center text-primary mb-6">Resumen de tu Selección</h3>
               {selectedShirtType || selectedColor || finalSelectedDesign || (aiPrompt.trim() && aiGeneratedImageUrl) ? (
                 <div className="space-y-3 mb-8 text-center font-body text-muted-foreground">
