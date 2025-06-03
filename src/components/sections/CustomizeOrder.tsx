@@ -68,31 +68,27 @@ export default function CustomizeOrder() {
   const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
     setTimeout(() => {
       ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100); // Small delay to ensure the section is rendered
+    }, 100); 
   };
 
-  // Scroll to Size section when shirt type is selected
   useEffect(() => {
     if (selectedShirtTypeId && sizeSectionRef.current) {
       scrollToSection(sizeSectionRef);
     }
   }, [selectedShirtTypeId]);
 
-  // Scroll to Color section when size is selected
   useEffect(() => {
     if (selectedShirtTypeId && selectedSize && colorSectionRef.current) {
       scrollToSection(colorSectionRef);
     }
   }, [selectedSize, selectedShirtTypeId]);
 
-  // Scroll to Design section when color is selected
   useEffect(() => {
     if (selectedShirtTypeId && selectedSize && selectedColorId && designSectionRef.current) {
       scrollToSection(designSectionRef);
     }
   }, [selectedColorId, selectedSize, selectedShirtTypeId]);
   
-  // Scroll to Summary section when design is selected or AI image is generated
   useEffect(() => {
     if (
       selectedShirtTypeId &&
@@ -108,7 +104,6 @@ export default function CustomizeOrder() {
 
   const handleSelectShirtType = (shirtTypeId: string) => {
     setSelectedShirtTypeId(shirtTypeId);
-    // Reset subsequent selections
     setSelectedSize(null); 
     setSelectedColorId(null);
     setSelectedDesignId(null);
@@ -126,15 +121,14 @@ export default function CustomizeOrder() {
 
   const handleSelectDesign = (designId: string) => {
     setSelectedDesignId(designId);
-    setAiPrompt(''); // Clear AI prompt if a predefined design is selected
-    setAiGeneratedImageUrl(null); // Clear AI image if a predefined design is selected
+    setAiPrompt(''); 
+    setAiGeneratedImageUrl(null); 
   };
 
   const handleAiPromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setAiPrompt(event.target.value);
     if (event.target.value.trim()) {
-      setSelectedDesignId(null); // Clear predefined design if user types in AI prompt
-      // Do not clear aiGeneratedImageUrl here, allow user to re-generate or keep previous.
+      setSelectedDesignId(null); 
     }
   };
 
@@ -144,8 +138,8 @@ export default function CustomizeOrder() {
       return;
     }
     setIsGeneratingImage(true);
-    setAiGeneratedImageUrl(null); // Clear previous image before generating new one
-    setSelectedDesignId(null); // Ensure predefined design is deselected
+    setAiGeneratedImageUrl(null); 
+    setSelectedDesignId(null); 
     try {
       const result = await generateDesign({ prompt: aiPrompt.trim() });
       if (result.imageDataUri) {
@@ -291,8 +285,8 @@ export default function CustomizeOrder() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-8 md:gap-x-12">
           <div className="lg:col-span-2 space-y-12 md:space-y-16">
-            {/* Sección Tipo de Prenda */}
-            <div className="scroll-mt-24"> {/* No ref needed here as it's the first section */}
+            
+            <div className="scroll-mt-24"> 
               <SectionTitle title="Elige el Tipo de Prenda" step={1} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                 {shirtTypes.map((type) => (
@@ -329,7 +323,7 @@ export default function CustomizeOrder() {
               </div>
             </div>
 
-            {/* Sección Talla */}
+            
             {selectedShirtTypeId && (
               <div ref={sizeSectionRef} className="scroll-mt-24">
                 <SectionTitle title="Elige una Talla" step={2} />
@@ -352,7 +346,7 @@ export default function CustomizeOrder() {
               </div>
             )}
 
-            {/* Sección Color */}
+            
             {selectedShirtTypeId && selectedSize && (
               <div ref={colorSectionRef} className="scroll-mt-24">
                 <SectionTitle title="Selecciona un Color" step={3} />
@@ -380,7 +374,7 @@ export default function CustomizeOrder() {
               </div>
             )}
 
-            {/* Sección Diseño */}
+            
             {selectedShirtTypeId && selectedSize && selectedColorId && (
               <div ref={designSectionRef} className="scroll-mt-24">
                 <SectionTitle title="Elige o Describe tu Diseño" step={4} />
@@ -497,7 +491,7 @@ export default function CustomizeOrder() {
             )}
           </div>
 
-          {/* Columna del Resumen */}
+          
           <div className="lg:col-span-1 mt-12 lg:mt-0 sticky top-24 z-10 self-start">
             <div ref={summarySectionRef} className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border scroll-mt-24">
               <h3 className="text-2xl md:text-3xl font-headline font-semibold text-center text-primary mb-6">Resumen de tu Selección</h3>
@@ -529,7 +523,7 @@ export default function CustomizeOrder() {
                   (aiPrompt.trim() && !aiGeneratedImageUrl && !selectedDesignId) || 
                   isGeneratingImage
                 }
-                className="w-full font-headline font-bold text-base md:text-lg py-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md shadow-lg hover:shadow-primary/40 transition-all duration-300 disabled:opacity-70"
+                className="w-full font-headline font-bold text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md shadow-lg hover:shadow-primary/40 transition-all duration-300 disabled:opacity-70"
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 Agregar al Carrito
