@@ -7,9 +7,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, PlusCircle, MinusCircle, ShoppingBag, ArrowLeft, Sparkles } from 'lucide-react';
+import { Trash2, PlusCircle, MinusCircle, ShoppingBag, ArrowLeft, Sparkles, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export default function CartPage() {
   const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart, getItemCount } = useCart();
@@ -45,6 +45,28 @@ export default function CartPage() {
       duration: 2000,
     });
   };
+
+  const generateWhatsAppMessage = useCallback(() => {
+    let message = "Hola CAMISETIA, quiero hacer el siguiente pedido:\n\n";
+    cartItems.forEach(item => {
+      message += `- ${item.quantity} x ${item.shirtType.name} `;
+      if (item.size) {
+        message += `Talla ${item.size.name}, `;
+      }
+      message += `Color ${item.color.name}. `;
+      message += `Diseño: ${item.design.name}`;
+      if (item.design.id.startsWith('ai-generated')) {
+          message += " (Generado por IA)";
+      }
+      message += ".\n";
+      if (item.aiPrompt) {
+        message += `  Tu idea: "${item.aiPrompt}"\n`;
+      }
+    });
+    message += `\nSubtotal: $${getCartTotal().toFixed(2)}\n\n`;
+    message += "¡Gracias por tu pedido!";
+    return encodeURIComponent(message);
+  }, [cartItems, getCartTotal]);
 
   if (!isClient) {
     return (
@@ -156,8 +178,20 @@ export default function CartPage() {
               </div>
             </CardContent>
             <CardFooter className="flex-col space-y-3">
-              <Button size="lg" className="w-full font-headline text-base md:text-lg py-6" onClick={() => toast({ title: 'Próximamente', description: 'La funcionalidad de pago estará disponible pronto.'})}>
-                Proceder al Pago
+              <Button 
+                asChild 
+                size="lg" 
+                className="w-full font-headline text-base md:text-lg py-6"
+              >
+                <a 
+                  href={`https://wa.me/3173196276?text=${isClient ? generateWhatsAppMessage() : 'Cargando detalles del pedido...'}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  aria-label="Enviar pedido a WhatsApp"
+                >
+                  <Send className="mr-2 h-5 w-5" />
+                  Enviar Pedido a WhatsApp
+                </a>
               </Button>
               <Button variant="outline" asChild className="w-full font-headline">
                 <Link href="/#create-idea">
@@ -174,5 +208,3 @@ export default function CartPage() {
     </main>
   );
 }
-
-    
