@@ -39,7 +39,7 @@ export default function AppHeader() {
             className='pt-2'
             src="/logo.png" // Path to your logo in the public folder
             alt="CAMISETIA Logo"
-            width={160} // Adjusted width
+            width={120} // Adjusted width
             height={40} // Adjusted height
             priority // Load logo quickly
           />

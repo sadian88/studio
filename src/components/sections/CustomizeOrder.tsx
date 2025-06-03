@@ -6,16 +6,16 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, ShoppingCart, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
+import { CheckCircle2, ShoppingCart, ArrowRight, Sparkles, Loader2, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/CartContext';
 import { generateDesign } from '@/ai/flows/generate-design-flow';
 
 const productTypes = [
- { id: 'short-sleeve', name: 'Manga Corta', imgSrc: 'https://placehold.co/200x300.png', hint: 'shortsleeve shirt', price: 20, hasSizes: true },
- { id: 'long-sleeve', name: 'Manga Larga', imgSrc: 'https://placehold.co/200x300.png', hint: 'longsleeve shirt', price: 25, hasSizes: true },
- { id: 'cap-printed', name: 'Gorra Estampada', imgSrc: 'https://placehold.co/300x200.png', hint: 'cap design', price: 18, hasSizes: false },
+ { id: 'short-sleeve', name: 'Manga Corta', imgSrc: '/camisetas/cnegramangacorta.png', hint: 'shortsleeve shirt', price: 20, hasSizes: true },
+ { id: 'long-sleeve', name: 'Manga Larga', imgSrc: '/camisetas/cnegramangalarga.png', hint: 'longsleeve shirt', price: 25, hasSizes: true },
+ { id: 'cap-printed', name: 'Gorra Estampada', imgSrc: '/camisetas/gorra.png', hint: 'cap design', price: 18, hasSizes: false },
 ];
 
 const sizes = [
@@ -33,11 +33,11 @@ const colors = [
 ];
 
 const designs = [
-  { id: 'design1', name: 'Diseño Abstracto Moderno', imgSrc: '/disenios/caballopunk.png', hint: 'abstract design', priceModifier: 5 },
-  { id: 'design2', name: 'Patrón Gráfico Urbano', imgSrc: 'https://placehold.co/250x250.png', hint: 'graphic pattern', priceModifier: 5 },
-  { id: 'design3', name: 'Arte Minimalista Elegante', imgSrc: 'https://placehold.co/250x250.png', hint: 'minimalist art', priceModifier: 3 },
-  { id: 'design4', name: 'Logo Vintage Clásico', imgSrc: 'https://placehold.co/250x250.png', hint: 'vintage logo', priceModifier: 4 },
-  { id: 'design5', name: 'Ilustración Naturaleza Fresca', imgSrc: 'https://placehold.co/250x250.png', hint: 'nature illustration', priceModifier: 6 },
+  { id: 'design1', name: 'Diseño Abstracto Caballo', imgSrc: '/disenios/caballopunk.png', hint: 'abstract design', priceModifier: 5 },
+  { id: 'design2', name: 'Patrón Gráfico Urbano', imgSrc: '/disenios/rikymorty.png', hint: 'graphic pattern', priceModifier: 5 },
+  { id: 'design3', name: 'Arte Minimalista Elegante', imgSrc: '/disenios/spider.png', hint: 'minimalist art', priceModifier: 3 },
+  { id: 'design4', name: 'Logo Vintage Clásico', imgSrc: '/disenios/onepushman.png', hint: 'vintage logo', priceModifier: 4 },
+  { id: 'design5', name: 'Ilustración Naturaleza Fresca', imgSrc: '/disenios/gym.png', hint: 'nature illustration', priceModifier: 6 },
 ];
 
 const AI_GENERATED_DESIGN_PRICE_MODIFIER = 7;
@@ -201,7 +201,7 @@ export default function CustomizeOrder() {
     const sizeObject = selectedProductType?.hasSizes && selectedSize ? sizes.find(s => s.id === selectedSize) : undefined;
     const color = colors.find(c => c.id === selectedColorId);
 
-    if (!productType || !color || (selectedProductType?.hasSizes && !sizeObject && selectedProductType.id !== 'cap-printed') ) { // Adjusted condition for cap
+    if (!productType || !color || (selectedProductType?.hasSizes && !sizeObject && productType.id !== 'cap-printed') ) {
         toast({ title: 'Error', description: 'Tipo de prenda, talla o color no válido.', variant: 'destructive' });
         return;
     }
@@ -314,7 +314,7 @@ export default function CustomizeOrder() {
                     } bg-card`}
                   >
                     <CardContent className="p-0 relative">
-                      <div className={`aspect-[3/4] ${type.id === 'cap-printed' ? 'aspect-video' : 'aspect-[3/4]'} w-full relative`}>
+                      <div className={`w-full relative bg-secondary rounded-t-xl ${type.id === 'cap-printed' ? 'aspect-video' : 'aspect-[3/4]'}`}>
                         <Image
                           src={type.imgSrc}
                           alt={type.name}
@@ -501,6 +501,12 @@ export default function CustomizeOrder() {
                           )}
                           </div>
                       </div>
+                  )}
+                   {aiPrompt.trim() && (
+                    <div className="mt-4 p-3 rounded-lg border border-accent/50 bg-accent/10 text-accent font-medium text-sm flex items-center gap-2.5 shadow-sm">
+                      <Info className="h-5 w-5 shrink-0" />
+                      <span>Importante: La imagen generada por IA debes enviarla a nuestro WhatsApp para confirmar el diseño.</span>
+                    </div>
                   )}
                 </div>
               </div>

@@ -27,7 +27,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background text-foreground">
         <CartProvider>
-          <PromotionalBanner />
+          {/* <PromotionalBanner /> */}
           <AppHeader />
           {children}
           <Toaster />

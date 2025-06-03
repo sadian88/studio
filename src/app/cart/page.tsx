@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, PlusCircle, MinusCircle, ShoppingBag, ArrowLeft, Sparkles, Send } from 'lucide-react';
+import { Trash2, PlusCircle, MinusCircle, ShoppingBag, ArrowLeft, Sparkles, Send, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useCallback } from 'react';
 
@@ -163,6 +163,10 @@ export default function CartPage() {
               <CardTitle className="text-2xl md:text-3xl font-headline text-primary">Resumen del Pedido</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="mb-4 p-3 rounded-lg border border-primary/50 bg-primary/10 text-primary font-medium text-sm flex items-center gap-2.5 shadow-sm">
+                <ImageIcon className="h-5 w-5 shrink-0" />
+                <span>Nota: Te compartiremos una imagen simulada de tu diseño en la camiseta o gorra por WhatsApp.</span>
+              </div>
               <div className="flex justify-between font-body">
                 <span className="text-muted-foreground">Subtotal ({getItemCount()} items):</span>
                 <span className="font-semibold text-foreground">${getCartTotal().toFixed(2)}</span>
@@ -217,3 +221,4 @@ export default function CartPage() {
     </main>
   );
 }
+
