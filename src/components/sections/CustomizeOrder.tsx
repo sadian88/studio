@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -56,13 +56,44 @@ export default function CustomizeOrder() {
   const { toast } = useToast();
   const { addToCart } = useCart();
 
+  const sizeSectionRef = useRef<HTMLDivElement>(null);
+  const colorSectionRef = useRef<HTMLDivElement>(null);
+  const designSectionRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
+    setTimeout(() => {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
   const handleSelectShirtType = (shirtTypeId: string) => {
     setSelectedShirtTypeId(shirtTypeId);
-    setSelectedSize(null); // Reset size when shirt type changes
+    setSelectedSize(null); 
+    setSelectedColorId(null);
+    setSelectedDesignId(null);
+    setAiPrompt('');
+    setAiGeneratedImageUrl(null);
+    if (sizeSectionRef.current) {
+      scrollToSection(sizeSectionRef);
+    }
+  };
+
+  const handleSelectSize = (sizeId: string) => {
+    setSelectedSize(sizeId);
+    if (colorSectionRef.current) {
+      scrollToSection(colorSectionRef);
+    }
+  };
+  
+  const handleSelectColor = (colorId: string) => {
+    setSelectedColorId(colorId);
+    if (designSectionRef.current) {
+      scrollToSection(designSectionRef);
+    }
   };
 
   const handleSelectDesign = (designId: string) => {
@@ -228,7 +259,8 @@ export default function CustomizeOrder() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-8 md:gap-x-12">
           <div className="lg:col-span-2 space-y-12 md:space-y-16">
-            <div>
+            {/* Sección Tipo de Prenda */}
+            <div className="scroll-mt-24">
               <SectionTitle title="Elige el Tipo de Prenda" step={1} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                 {shirtTypes.map((type) => (
@@ -265,15 +297,16 @@ export default function CustomizeOrder() {
               </div>
             </div>
 
+            {/* Sección Talla */}
             {selectedShirtTypeId && (
-              <div className="mt-12 md:mt-16">
+              <div ref={sizeSectionRef} className="scroll-mt-24">
                 <SectionTitle title="Elige una Talla" step={2} />
                 <div className="flex flex-wrap gap-3 md:gap-4 justify-center">
                   {sizes.map((size) => (
                     <Button
                       key={size.id}
                       variant={selectedSize === size.id ? 'default' : 'outline'}
-                      onClick={() => setSelectedSize(size.id)}
+                      onClick={() => handleSelectSize(size.id)}
                       className={`w-20 h-12 rounded-lg text-base font-medium transition-all duration-200 ease-in-out transform hover:scale-105 ${
                         selectedSize === size.id 
                         ? 'bg-accent text-accent-foreground ring-2 ring-accent ring-offset-2 ring-offset-background shadow-lg' 
@@ -287,145 +320,152 @@ export default function CustomizeOrder() {
               </div>
             )}
 
-            <div>
-              <SectionTitle title="Selecciona un Color" step={selectedShirtTypeId ? 3 : 2} />
-              <div className="flex flex-wrap gap-4 md:gap-6 justify-center">
-                {colors.map((color) => (
-                  <button
-                    key={color.id}
-                    onClick={() => setSelectedColorId(color.id)}
-                    aria-label={`Seleccionar color ${color.name}`}
-                    className={`w-12 h-12 md:w-16 md:h-16 rounded-full cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-110 shadow-md ${color.twClass} ${
-                      color.id === 'black' ? color.borderClass : '' 
-                    } ${
-                      color.id === 'white' ? color.borderClass : '' 
-                    } ${
-                      selectedColorId === color.id ? 'ring-4 ring-offset-2 ring-accent ring-offset-background' : 'ring-1 ring-border'
-                    }`}
-                    style={{ backgroundColor: color.hex }}
-                  >
-                    {selectedColorId === color.id && (
-                      <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-white mix-blend-difference m-auto" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <SectionTitle title="Elige o Describe tu Diseño" step={selectedShirtTypeId ? 4 : 3} />
-              <h4 className="text-xl font-body font-semibold text-foreground mb-4">Opción A: Escoge un Diseño Exclusivo</h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
-                {designs.map((design) => (
-                  <Card
-                    key={design.id}
-                    onClick={() => handleSelectDesign(design.id)}
-                    className={`cursor-pointer transition-all duration-300 ease-in-out transform hover:shadow-accent/30 hover:-translate-y-1 rounded-xl overflow-hidden group ${
-                      selectedDesignId === design.id && !aiPrompt ? 'ring-4 ring-accent shadow-accent/20' : 'ring-1 ring-border hover:ring-accent/50'
-                    } bg-card`}
-                  >
-                    <CardContent className="p-0 relative">
-                       <div className="aspect-square w-full relative">
-                        <Image
-                          src={design.imgSrc}
-                          alt={design.name}
-                          fill
-                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          data-ai-hint={design.hint}
-                        />
-                      </div>
-                      {selectedDesignId === design.id && !aiPrompt && (
-                        <div className="absolute top-2 right-2 bg-accent rounded-full p-1 shadow-md">
-                          <CheckCircle2 className="w-5 h-5 text-accent-foreground" />
-                        </div>
+            {/* Sección Color */}
+            {selectedSize && selectedShirtTypeId && (
+              <div ref={colorSectionRef} className="scroll-mt-24">
+                <SectionTitle title="Selecciona un Color" step={3} />
+                <div className="flex flex-wrap gap-4 md:gap-6 justify-center">
+                  {colors.map((color) => (
+                    <button
+                      key={color.id}
+                      onClick={() => handleSelectColor(color.id)}
+                      aria-label={`Seleccionar color ${color.name}`}
+                      className={`w-12 h-12 md:w-16 md:h-16 rounded-full cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-110 shadow-md ${color.twClass} ${
+                        color.id === 'black' ? color.borderClass : '' 
+                      } ${
+                        color.id === 'white' ? color.borderClass : '' 
+                      } ${
+                        selectedColorId === color.id ? 'ring-4 ring-offset-2 ring-accent ring-offset-background' : 'ring-1 ring-border'
+                      }`}
+                      style={{ backgroundColor: color.hex }}
+                    >
+                      {selectedColorId === color.id && (
+                        <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-white mix-blend-difference m-auto" />
                       )}
-                      <div className="p-3 bg-card/80 backdrop-blur-sm">
-                        <p className="text-xs md:text-sm font-body text-center text-foreground truncate group-hover:text-primary transition-colors">{design.name}</p>
-                         <p className="text-center text-xs text-muted-foreground">+${design.priceModifier.toFixed(2)}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    </button>
+                  ))}
+                </div>
               </div>
+            )}
 
-              <Separator className="my-8 bg-border/40" />
-
-              <div>
-                <h4 className="text-xl font-body font-semibold text-foreground mb-4 flex items-center">
-                  <Sparkles className="w-5 h-5 mr-2 text-accent" />
-                  Opción B: Describe tu idea para nuestro generador IA
-                </h4>
-                <Textarea
-                  placeholder="Ej: Un astronauta surfeando en una pizza con temática espacial y colores neón..."
-                  value={aiPrompt}
-                  onChange={handleAiPromptChange}
-                  className="min-h-[100px] text-base border-input focus:ring-accent bg-card placeholder:text-muted-foreground/70"
-                  rows={4}
-                />
-                <Button
-                    onClick={handleGenerateAiDesign}
-                    disabled={!aiPrompt.trim() || isGeneratingImage}
-                    variant="outline"
-                    size="sm"
-                    className="mt-3 border-accent text-accent hover:bg-accent/10 hover:text-accent"
-                  >
-                    {isGeneratingImage ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generando Imagen...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Generar Diseño con IA
-                      </>
-                    )}
-                  </Button>
-                {aiPrompt.trim() && ( 
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Costo adicional por diseño IA: +${AI_GENERATED_DESIGN_PRICE_MODIFIER.toFixed(2)}
-                  </p>
-                )}
-
-                {(aiPrompt.trim() || aiGeneratedImageUrl) && ( 
-                    <div className={`mt-4 p-4 border border-dashed rounded-lg bg-card/30 ${aiPrompt.trim() ? 'border-accent/50' : 'border-transparent'}`}>
-                        <h5 className="text-sm font-body font-semibold text-accent mb-2">Vista Previa Diseño IA</h5>
-                        <div className="flex justify-center items-center w-full max-w-xs mx-auto aspect-square bg-muted/20 rounded-md overflow-hidden">
-                        {isGeneratingImage ? (
-                            <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
-                                <p className="text-sm">Cargando diseño...</p>
-                            </div>
-                        ) : aiGeneratedImageUrl ? (
-                            <Image
-                                src={aiGeneratedImageUrl}
-                                alt="Diseño generado por IA"
-                                width={250}
-                                height={250}
-                                className="object-contain w-full h-full"
-                            />
-                        ) : ( 
-                             aiPrompt.trim() &&
-                             <Image
-                                src={AI_DESIGN_PLACEHOLDER_IMG}
-                                alt="Placeholder Diseño IA"
-                                width={250}
-                                height={250}
-                                className="object-contain w-full h-full opacity-40"
-                                data-ai-hint={AI_DESIGN_PLACEHOLDER_HINT}
-                              />
-                        )}
-                        { !aiPrompt.trim() && !aiGeneratedImageUrl && !isGeneratingImage && (
-                            <p className="text-sm text-muted-foreground p-4 text-center">Ingresa una descripción y haz clic en &quot;Generar Diseño con IA&quot; para ver una vista previa.</p>
-                        )}
+            {/* Sección Diseño */}
+            {selectedColorId && selectedSize && selectedShirtTypeId && (
+              <div ref={designSectionRef} className="scroll-mt-24">
+                <SectionTitle title="Elige o Describe tu Diseño" step={4} />
+                <h4 className="text-xl font-body font-semibold text-foreground mb-4">Opción A: Escoge un Diseño Exclusivo</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
+                  {designs.map((design) => (
+                    <Card
+                      key={design.id}
+                      onClick={() => handleSelectDesign(design.id)}
+                      className={`cursor-pointer transition-all duration-300 ease-in-out transform hover:shadow-accent/30 hover:-translate-y-1 rounded-xl overflow-hidden group ${
+                        selectedDesignId === design.id && !aiPrompt ? 'ring-4 ring-accent shadow-accent/20' : 'ring-1 ring-border hover:ring-accent/50'
+                      } bg-card`}
+                    >
+                      <CardContent className="p-0 relative">
+                         <div className="aspect-square w-full relative">
+                          <Image
+                            src={design.imgSrc}
+                            alt={design.name}
+                            fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            data-ai-hint={design.hint}
+                          />
                         </div>
-                    </div>
-                )}
+                        {selectedDesignId === design.id && !aiPrompt && (
+                          <div className="absolute top-2 right-2 bg-accent rounded-full p-1 shadow-md">
+                            <CheckCircle2 className="w-5 h-5 text-accent-foreground" />
+                          </div>
+                        )}
+                        <div className="p-3 bg-card/80 backdrop-blur-sm">
+                          <p className="text-xs md:text-sm font-body text-center text-foreground truncate group-hover:text-primary transition-colors">{design.name}</p>
+                           <p className="text-center text-xs text-muted-foreground">+${design.priceModifier.toFixed(2)}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                <Separator className="my-8 bg-border/40" />
+
+                <div>
+                  <h4 className="text-xl font-body font-semibold text-foreground mb-4 flex items-center">
+                    <Sparkles className="w-5 h-5 mr-2 text-accent" />
+                    Opción B: Describe tu idea para nuestro generador IA
+                  </h4>
+                  <Textarea
+                    placeholder="Ej: Un astronauta surfeando en una pizza con temática espacial y colores neón..."
+                    value={aiPrompt}
+                    onChange={handleAiPromptChange}
+                    className="min-h-[100px] text-base border-input focus:ring-accent bg-card placeholder:text-muted-foreground/70"
+                    rows={4}
+                  />
+                  <Button
+                      onClick={handleGenerateAiDesign}
+                      disabled={!aiPrompt.trim() || isGeneratingImage}
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 border-accent text-accent hover:bg-accent/10 hover:text-accent"
+                    >
+                      {isGeneratingImage ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generando Imagen...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="mr-2 h-4 w-4" />
+                          Generar Diseño con IA
+                        </>
+                      )}
+                    </Button>
+                  {aiPrompt.trim() && ( 
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Costo adicional por diseño IA: +${AI_GENERATED_DESIGN_PRICE_MODIFIER.toFixed(2)}
+                    </p>
+                  )}
+
+                  {(aiPrompt.trim() || aiGeneratedImageUrl) && ( 
+                      <div className={`mt-4 p-4 border border-dashed rounded-lg bg-card/30 ${aiPrompt.trim() ? 'border-accent/50' : 'border-transparent'}`}>
+                          <h5 className="text-sm font-body font-semibold text-accent mb-2">Vista Previa Diseño IA</h5>
+                          <div className="flex justify-center items-center w-full max-w-xs mx-auto aspect-square bg-muted/20 rounded-md overflow-hidden">
+                          {isGeneratingImage ? (
+                              <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                  <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
+                                  <p className="text-sm">Cargando diseño...</p>
+                              </div>
+                          ) : aiGeneratedImageUrl ? (
+                              <Image
+                                  src={aiGeneratedImageUrl}
+                                  alt="Diseño generado por IA"
+                                  width={250}
+                                  height={250}
+                                  className="object-contain w-full h-full"
+                              />
+                          ) : ( 
+                               aiPrompt.trim() &&
+                               <Image
+                                  src={AI_DESIGN_PLACEHOLDER_IMG}
+                                  alt="Placeholder Diseño IA"
+                                  width={250}
+                                  height={250}
+                                  className="object-contain w-full h-full opacity-40"
+                                  data-ai-hint={AI_DESIGN_PLACEHOLDER_HINT}
+                                />
+                          )}
+                          { !aiPrompt.trim() && !aiGeneratedImageUrl && !isGeneratingImage && (
+                              <p className="text-sm text-muted-foreground p-4 text-center">Ingresa una descripción y haz clic en &quot;Generar Diseño con IA&quot; para ver una vista previa.</p>
+                          )}
+                          </div>
+                      </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
+          {/* Columna del Resumen */}
           <div className="lg:col-span-1 mt-12 lg:mt-0 sticky top-24 z-10 self-start">
             <div className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border">
               <h3 className="text-2xl md:text-3xl font-headline font-semibold text-center text-primary mb-6">Resumen de tu Selección</h3>
@@ -470,3 +510,4 @@ export default function CustomizeOrder() {
     </section>
   );
 }
+
