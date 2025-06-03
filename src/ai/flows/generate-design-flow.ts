@@ -8,9 +8,24 @@
  * - GenerateDesignOutput - The return type for the generateDesign function.
  */
 
+import { auth } from '@/lib/firebase';
+import { signInWithCustomToken } from '@firebase/auth';
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+interface DesignRecord {
+  timestamp: number;
+  userId: string;
+}
+
+let generatedDesigns: DesignRecord[] = [];
+const WINDOW_SIZE_MS = 24 * 60 * 60 * 1000; // 24 hours
+const MAX_DESIGNS_PER_USER_PER_WINDOW = 3;
+
+const cleanUpOldRecords = () => {
+  const cutoff = Date.now() - WINDOW_SIZE_MS;
+  generatedDesigns = generatedDesigns.filter(record => record.timestamp > cutoff);
+};
 const GenerateDesignInputSchema = z.object({
   prompt: z.string().describe('The text prompt to generate an image from.'),
 });
@@ -32,6 +47,22 @@ const generateDesignFlow = ai.defineFlow(
     outputSchema: GenerateDesignOutputSchema,
   },
   async (input) => {
+
+    // Simulate authentication or get user ID from context/session
+    // In a real application, you would get the user ID from the authenticated session
+    // const userId = auth.currentUser?.uid || 'anonymous'; // Replace with actual user ID
+    const userId = 'simulated-user-id'; // Using a placeholder for demonstration
+
+    cleanUpOldRecords();
+
+    const userDesignsInWindow = generatedDesigns.filter(record => record.userId === userId).length;
+
+    if (userDesignsInWindow >= MAX_DESIGNS_PER_USER_PER_WINDOW) {
+      throw new Error("Has alcanzado el límite de 3 diseños por IA en las últimas 24 horas. Si necesitas ayuda adicional con tu diseño, por favor contáctanos por WhatsApp.");
+    }
+
+    generatedDesigns.push({ timestamp: Date.now(), userId });
+
     let mediaUrl: string | undefined = undefined;
     let aiTextResponse: string | undefined = undefined;
 

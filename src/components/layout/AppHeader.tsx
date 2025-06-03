@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { useCart } from '@/context/CartContext';
 import { Badge } from '@/components/ui/badge';
-import { useEffect, useState } from 'react';
 
 const navItems = [
   { href: '/#collections', label: 'Colecciones' },
@@ -17,18 +16,12 @@ const navItems = [
 
 export default function AppHeader() {
   const { getItemCount } = useCart();
-  const [itemCount, setItemCount] = useState(0);
-  const [isClient, setIsClient] = useState(false);
+  const itemCount = getItemCount();
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const whatsappNumber = '+5491112345678'; // Your WhatsApp number
+  const whatsappMessage = 'Hola quiero mas informacion sobre sus productos'; // Your desired message
+  const whatsappLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
   
-  useEffect(() => {
-    if (isClient) {
-      setItemCount(getItemCount());
-    }
-  }, [getItemCount, isClient]);
 
 
   return (
@@ -46,15 +39,30 @@ export default function AppHeader() {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6 font-body">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            if (item.href === '/#contact') {
+              return (
+                <a
+                  key={item.label}
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {item.label}
+                </a>
+              );
+            }
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="text-base font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center space-x-2 md:space-x-4">
@@ -64,7 +72,7 @@ export default function AppHeader() {
           <Link href="/cart" passHref>
             <Button variant="ghost" size="icon" aria-label="Carrito de compras" className="relative">
               <ShoppingCart className="h-6 w-6 text-accent" />
-              {isClient && itemCount > 0 && (
+              {itemCount > 0 && (
                 <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs rounded-full">
                   {itemCount}
                 </Badge>
@@ -89,22 +97,38 @@ export default function AppHeader() {
                 />
               </Link>
               <nav className="flex flex-col space-y-5 font-body">
-                {navItems.map((item) => (
-                  <SheetClose key={item.label} asChild>
-                    <Link
-                      href={item.href}
-                      className="text-lg font-medium text-foreground hover:text-primary transition-colors"
-                    >
-                      {item.label}
-                    </Link>
-                  </SheetClose>
-                ))}
+                {navItems.map((item) => {
+                  if (item.href === '/#contact') {
+                    return (
+                      <SheetClose key={item.label} asChild>
+                         <a
+                          href={whatsappLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                         >
+                           {item.label}
+                         </a>
+                      </SheetClose>
+                    );
+                  }
+                  return (
+                    <SheetClose key={item.label} asChild>
+                      <Link
+                        href={item.href}
+                        className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                      >
+                        {item.label}
+                      </Link>
+                    </SheetClose>
+                  );
+                })}
                  <SheetClose asChild>
                     <Link
                       href="/cart"
                       className="text-lg font-medium text-foreground hover:text-primary transition-colors flex items-center"
-                    >
-                      <ShoppingCart className="h-5 w-5 mr-2" /> Carrito {isClient && itemCount > 0 && `(${itemCount})`}
+                    >  
+                      <ShoppingCart className="h-5 w-5 mr-2" /> Carrito {itemCount > 0 && `(${itemCount})`}
                     </Link>
                   </SheetClose>
               </nav>
