@@ -5,14 +5,13 @@ export default function Hero() {
   return (
     <section className="text-center py-16 md:py-28">
       <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold uppercase tracking-tight leading-tight">
-        <span className="text-primary">Diseñamos y</span>
+        <span className="text-primary">Diseñamos con ia
+        </span>
         <br className="md:hidden" />
-        <span className="text-foreground"> DISEÑAMOS CON IA TU CAMISETA ÚNICA</span>
-        <br /> 
-        <span className="text-primary">el mismo día</span>
+        <span className="text-primary">tu camiseta única</span>
       </h1>
       <p className="mt-8 font-body text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-        Camisetas, Hoodies, Gorras y Productos Personalizados en Medellín. Estampados Medellín.
+        Camisetas, Gorras y Productos Personalizados en Medellín.
       </p>
       <Button
         asChild

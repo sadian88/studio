@@ -2,8 +2,7 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 
 const products = [
-  { id: 1, src: '/camisetas/cami1.png', alt: 'Diseño Camiseta Moderna', hint: 'tshirt design' },
-  { id: 2, src: '/camisetas/cami2.png', alt: 'Hoodie Personalizado Urbano', hint: 'tshirt design' },
+  { id: 1, src: '/camisetas/cami2.png', alt: 'Diseño Camiseta Moderna', hint: 'tshirt design' },
   { id: 3, src: '/camisetas/cami1.png', alt: 'Gorra Estampada Exclusiva', hint: 'tshirt design' },
   { id: 4, src: '/camisetas/cami2.png', alt: 'Camiseta Gráfica Impactante', hint: 'tshirt design' },
   { id: 5, src: '/camisetas/cami1.png', alt: 'Diseño Minimalista Prenda', hint: 'tshirt design' },

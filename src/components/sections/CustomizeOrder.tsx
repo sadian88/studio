@@ -426,8 +426,8 @@ export default function CustomizeOrder() {
             </div>
           </div>
 
-          <div className="lg:col-span-1 mt-12 lg:mt-0">
-            <div className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border sticky top-24 z-10">
+          <div className="lg:col-span-1 mt-12 lg:mt-0 sticky top-24 z-10 self-start">
+            <div className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border">
               <h3 className="text-2xl md:text-3xl font-headline font-semibold text-center text-primary mb-6">Resumen de tu Selección</h3>
               {selectedShirtType || selectedColor || finalSelectedDesign || (aiPrompt.trim() && aiGeneratedImageUrl) ? (
                 <div className="space-y-3 mb-8 text-center font-body text-muted-foreground">
@@ -454,7 +454,7 @@ export default function CustomizeOrder() {
                   (selectedShirtTypeId && !selectedSize) || 
                   !selectedColorId || 
                   (!selectedDesignId && (!aiPrompt.trim() || !aiGeneratedImageUrl)) ||
-                  (aiPrompt.trim() && !aiGeneratedImageUrl && !selectedDesignId) || // Case where prompt is there but image not generated and no pre-made design
+                  (aiPrompt.trim() && !aiGeneratedImageUrl && !selectedDesignId) || 
                   isGeneratingImage
                 }
                 className="w-full font-headline font-bold text-base md:text-lg py-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md shadow-lg hover:shadow-primary/40 transition-all duration-300 disabled:opacity-70"
@@ -470,6 +470,3 @@ export default function CustomizeOrder() {
     </section>
   );
 }
-    
-
-    
