@@ -181,16 +181,32 @@ export default function CartPage() {
               <Button 
                 asChild 
                 size="lg" 
-                className="w-full font-headline text-base md:text-lg py-6"
+                className="w-full font-headline text-base"
               >
                 <a 
                   href={`https://wa.me/3173196276?text=${isClient ? generateWhatsAppMessage() : 'Cargando detalles del pedido...'}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   aria-label="Enviar pedido a WhatsApp"
+                  className="flex items-center justify-center"
                 >
-                  <Send className="mr-2 h-5 w-5" />
-                  Enviar Pedido a WhatsApp
+                  <Send className="mr-1.5 h-5 w-5" />
+                  Enviar Pedido a
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="ml-1.5 h-5 w-5"
+                  >
+                    <path d="M21.926 13.151c-.346-.173-1.401-.692-1.62-.772-.218-.08-.375-.12-.533.12-.158.24-.613.772-.752.931-.14.158-.279.178-.518.059-.24-.12-.962-.355-1.833-.913-.733-.59-1.22-1.33-1.38-1.568-.158-.24-.02-.375.1-.494.108-.108.24-.279.359-.42.12-.14.158-.24.238-.398.08-.158.04-.298-.02-.418-.059-.12-.533-1.284-.732-1.743s-.39-.38-.532-.388c-.131-.009-.28.001-.428.001h-.01c-.178 0-.457.06-.696.3c-.24.24-.923.903-.923 2.204 0 1.3.943 2.552 1.082 2.73.14.178 1.853 2.83 4.492 3.968.62.269 1.1.418 1.483.532.645.198 1.222.168 1.678.1.498-.079 1.401-.573 1.6-1.126.198-.552.198-1.027.14-1.126-.061-.101-.219-.16-.458-.333z"></path>
+                    <path d="M12.074 2.074c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zm0 18.333c-4.602 0-8.333-3.73-8.333-8.333s3.73-8.333 8.333-8.333 8.333 3.731 8.333 8.333-3.731 8.333-8.333 8.333z"></path>
+                  </svg>
                 </a>
               </Button>
               <Button variant="outline" asChild className="w-full font-headline">
