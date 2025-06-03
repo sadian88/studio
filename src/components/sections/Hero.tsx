@@ -7,7 +7,7 @@ export default function Hero() {
       <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold uppercase tracking-tight leading-tight">
         <span className="text-primary">Diseñamos y</span>
         <br className="md:hidden" />
-        <span className="text-foreground"> Personalizamos</span>
+        <span className="text-foreground"> DISEÑAMOS CON IA TU CAMISETA ÚNICA</span>
         <br /> 
         <span className="text-primary">el mismo día</span>
       </h1>
