@@ -12,9 +12,10 @@ import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/CartContext';
 import { generateDesign } from '@/ai/flows/generate-design-flow';
 
-const shirtTypes = [
- { id: 'short-sleeve', name: 'Manga Corta', imgSrc: 'https://placehold.co/200x300.png', hint: 'shortsleeve shirt', price: 20 },
- { id: 'long-sleeve', name: 'Manga Larga', imgSrc: 'https://placehold.co/200x300.png', hint: 'longsleeve shirt', price: 25 },
+const productTypes = [
+ { id: 'short-sleeve', name: 'Manga Corta', imgSrc: 'https://placehold.co/200x300.png', hint: 'shortsleeve shirt', price: 20, hasSizes: true },
+ { id: 'long-sleeve', name: 'Manga Larga', imgSrc: 'https://placehold.co/200x300.png', hint: 'longsleeve shirt', price: 25, hasSizes: true },
+ { id: 'cap-printed', name: 'Gorra Estampada', imgSrc: 'https://placehold.co/300x200.png', hint: 'cap design', price: 18, hasSizes: false },
 ];
 
 const sizes = [
@@ -44,7 +45,7 @@ const AI_DESIGN_PLACEHOLDER_IMG = 'https://placehold.co/250x250.png';
 const AI_DESIGN_PLACEHOLDER_HINT = 'AI custom design';
 
 export default function CustomizeOrder() {
-  const [selectedShirtTypeId, setSelectedShirtTypeId] = useState<string | null>(null);
+  const [selectedProductTypeId, setSelectedProductTypeId] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
   const [selectedDesignId, setSelectedDesignId] = useState<string | null>(null);
@@ -65,6 +66,8 @@ export default function CustomizeOrder() {
     setIsClient(true);
   }, []);
 
+  const selectedProductType = productTypes.find(pt => pt.id === selectedProductTypeId);
+
   const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
     setTimeout(() => {
       ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -72,38 +75,42 @@ export default function CustomizeOrder() {
   };
 
   useEffect(() => {
-    if (selectedShirtTypeId && sizeSectionRef.current) {
-      scrollToSection(sizeSectionRef);
+    if (selectedProductTypeId) {
+      if (selectedProductType?.hasSizes && sizeSectionRef.current) {
+        scrollToSection(sizeSectionRef);
+      } else if (!selectedProductType?.hasSizes && colorSectionRef.current) {
+        scrollToSection(colorSectionRef);
+      }
     }
-  }, [selectedShirtTypeId]);
+  }, [selectedProductTypeId, selectedProductType]);
 
   useEffect(() => {
-    if (selectedShirtTypeId && selectedSize && colorSectionRef.current) {
+    if (selectedProductTypeId && selectedProductType?.hasSizes && selectedSize && colorSectionRef.current) {
       scrollToSection(colorSectionRef);
     }
-  }, [selectedSize, selectedShirtTypeId]);
+  }, [selectedSize, selectedProductTypeId, selectedProductType]);
 
   useEffect(() => {
-    if (selectedShirtTypeId && selectedSize && selectedColorId && designSectionRef.current) {
+    if (selectedProductTypeId && (!selectedProductType?.hasSizes || selectedSize) && selectedColorId && designSectionRef.current) {
       scrollToSection(designSectionRef);
     }
-  }, [selectedColorId, selectedSize, selectedShirtTypeId]);
+  }, [selectedColorId, selectedSize, selectedProductTypeId, selectedProductType]);
   
   useEffect(() => {
     if (
-      selectedShirtTypeId &&
-      selectedSize &&
+      selectedProductTypeId &&
+      (!selectedProductType?.hasSizes || selectedSize) &&
       selectedColorId &&
       (selectedDesignId || aiGeneratedImageUrl) &&
       summarySectionRef.current
     ) {
       scrollToSection(summarySectionRef);
     }
-  }, [selectedDesignId, aiGeneratedImageUrl, selectedColorId, selectedSize, selectedShirtTypeId]);
+  }, [selectedDesignId, aiGeneratedImageUrl, selectedColorId, selectedSize, selectedProductTypeId, selectedProductType]);
 
 
-  const handleSelectShirtType = (shirtTypeId: string) => {
-    setSelectedShirtTypeId(shirtTypeId);
+  const handleSelectProductType = (productTypeId: string) => {
+    setSelectedProductTypeId(productTypeId);
     setSelectedSize(null); 
     setSelectedColorId(null);
     setSelectedDesignId(null);
@@ -163,10 +170,10 @@ export default function CustomizeOrder() {
   };
 
   const handleAddToCart = () => {
-    if (!selectedShirtTypeId || (selectedShirtTypeId && !selectedSize) || !selectedColorId || (!selectedDesignId && !aiPrompt.trim())) {
-      let description = 'Por favor, elige tipo de prenda, talla, color y un diseño o describe tu idea.';
-      if (!selectedShirtTypeId) description = 'Por favor, elige un tipo de prenda.';
-      else if (!selectedSize) description = 'Por favor, elige una talla.';
+    if (!selectedProductTypeId || (selectedProductType?.hasSizes && !selectedSize) || !selectedColorId || (!selectedDesignId && !aiPrompt.trim())) {
+      let description = 'Por favor, completa todos los pasos de personalización.';
+      if (!selectedProductTypeId) description = 'Por favor, elige un tipo de prenda.';
+      else if (selectedProductType?.hasSizes && !selectedSize) description = 'Por favor, elige una talla.';
       else if (!selectedColorId) description = 'Por favor, elige un color.';
       else if (!selectedDesignId && !aiPrompt.trim()) description = 'Por favor, elige un diseño predefinido o describe tu idea para IA.';
       
@@ -189,17 +196,17 @@ export default function CustomizeOrder() {
         return;
     }
 
-    const shirtType = shirtTypes.find(st => st.id === selectedShirtTypeId);
-    const sizeObject = selectedSize ? sizes.find(s => s.id === selectedSize) : undefined;
+    const productType = productTypes.find(st => st.id === selectedProductTypeId);
+    const sizeObject = selectedProductType?.hasSizes && selectedSize ? sizes.find(s => s.id === selectedSize) : undefined;
     const color = colors.find(c => c.id === selectedColorId);
 
-    if (!shirtType || !color || (selectedShirtTypeId && !sizeObject)) {
+    if (!productType || !color || (selectedProductType?.hasSizes && !sizeObject) ) {
         toast({ title: 'Error', description: 'Tipo de prenda, talla o color no válido.', variant: 'destructive' });
         return;
     }
 
     let designForCart: { id: string; name: string; imgSrc: string; hint?: string };
-    let itemPrice = shirtType.price;
+    let itemPrice = productType.price;
     let promptForCart: string | undefined = undefined;
 
     if (aiPrompt.trim() && aiGeneratedImageUrl) {
@@ -226,8 +233,8 @@ export default function CustomizeOrder() {
     }
 
     const itemToAdd = {
-      shirtType: { id: shirtType.id, name: shirtType.name, imgSrc: shirtType.imgSrc },
-      size: sizeObject,
+      shirtType: { id: productType.id, name: productType.name, imgSrc: productType.imgSrc },
+      ...(sizeObject && { size: sizeObject }), // Add size only if it exists
       color: { id: color.id, name: color.name, hex: color.hex },
       design: designForCart,
       price: itemPrice,
@@ -240,7 +247,7 @@ export default function CustomizeOrder() {
       title: '¡Producto Agregado al Carrito!',
       description: (
         <div>
-          <p><strong>{shirtType.name} - {sizeObject?.name} - {color.name} - {designForCart.name}</strong></p>
+          <p><strong>{productType.name} {sizeObject ? `- ${sizeObject.name}` : ''} - {color.name} - {designForCart.name}</strong></p>
           {promptForCart && <p className="text-xs">Tu idea: {promptForCart.substring(0,50)}...</p>}
           <p>Personalización añadida correctamente.</p>
         </div>
@@ -256,12 +263,11 @@ export default function CustomizeOrder() {
     </div>
   );
 
-  const selectedShirtType = shirtTypes.find(st => st.id === selectedShirtTypeId);
   const selectedColor = colors.find(c => c.id === selectedColorId);
   const finalSelectedDesign = designs.find(d => d.id === selectedDesignId);
-  const currentSelectedSize = selectedSize ? sizes.find(s => s.id === selectedSize) : undefined;
+  const currentSelectedSize = selectedProductType?.hasSizes && selectedSize ? sizes.find(s => s.id === selectedSize) : undefined;
 
-  let currentPrice = selectedShirtType?.price || 0;
+  let currentPrice = selectedProductType?.price || 0;
   let designSummaryName = 'No seleccionado';
   let designPriceString = '';
 
@@ -275,6 +281,7 @@ export default function CustomizeOrder() {
     designPriceString = `+$${finalSelectedDesign.priceModifier.toFixed(2)}`;
   }
 
+  let stepCounter = 1;
 
   return (
     <section id="create-idea" className="py-16 md:py-24 bg-background">
@@ -287,28 +294,28 @@ export default function CustomizeOrder() {
           <div className="lg:col-span-2 space-y-12 md:space-y-16">
             
             <div className="scroll-mt-24"> 
-              <SectionTitle title="Elige el Tipo de Prenda" step={1} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-                {shirtTypes.map((type) => (
+              <SectionTitle title="Elige el Tipo de Prenda" step={stepCounter++} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {productTypes.map((type) => (
                   <Card
                     key={type.id}
-                    onClick={() => handleSelectShirtType(type.id)}
+                    onClick={() => handleSelectProductType(type.id)}
                     className={`cursor-pointer transition-all duration-300 ease-in-out transform hover:shadow-accent/30 hover:-translate-y-1 rounded-xl overflow-hidden ${
-                      selectedShirtTypeId === type.id ? 'ring-4 ring-accent shadow-accent/20' : 'ring-1 ring-border hover:ring-accent/50'
+                      selectedProductTypeId === type.id ? 'ring-4 ring-accent shadow-accent/20' : 'ring-1 ring-border hover:ring-accent/50'
                     } bg-card`}
                   >
                     <CardContent className="p-0 relative">
-                      <div className="aspect-[3/4] w-full relative">
+                      <div className={`aspect-[3/4] ${type.id === 'cap-printed' ? 'aspect-video' : 'aspect-[3/4]'} w-full relative`}>
                         <Image
                           src={type.imgSrc}
                           alt={type.name}
                           fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           className="object-cover"
                           data-ai-hint={type.hint}
                         />
                       </div>
-                      {selectedShirtTypeId === type.id && (
+                      {selectedProductTypeId === type.id && (
                         <div className="absolute top-3 right-3 bg-accent rounded-full p-1.5 shadow-md">
                           <CheckCircle2 className="w-6 h-6 text-accent-foreground" />
                         </div>
@@ -324,9 +331,9 @@ export default function CustomizeOrder() {
             </div>
 
             
-            {selectedShirtTypeId && (
+            {selectedProductTypeId && selectedProductType?.hasSizes && (
               <div ref={sizeSectionRef} className="scroll-mt-24">
-                <SectionTitle title="Elige una Talla" step={2} />
+                <SectionTitle title="Elige una Talla" step={stepCounter++} />
                 <div className="flex flex-wrap gap-3 md:gap-4 justify-center">
                   {sizes.map((size) => (
                     <Button
@@ -347,9 +354,9 @@ export default function CustomizeOrder() {
             )}
 
             
-            {selectedShirtTypeId && selectedSize && (
+            {selectedProductTypeId && (!selectedProductType?.hasSizes || selectedSize) && (
               <div ref={colorSectionRef} className="scroll-mt-24">
-                <SectionTitle title="Selecciona un Color" step={3} />
+                <SectionTitle title="Selecciona un Color" step={selectedProductType?.hasSizes ? stepCounter : stepCounter++} />
                 <div className="flex flex-wrap gap-4 md:gap-6 justify-center">
                   {colors.map((color) => (
                     <button
@@ -375,9 +382,9 @@ export default function CustomizeOrder() {
             )}
 
             
-            {selectedShirtTypeId && selectedSize && selectedColorId && (
+            {selectedProductTypeId && (!selectedProductType?.hasSizes || selectedSize) && selectedColorId && (
               <div ref={designSectionRef} className="scroll-mt-24">
-                <SectionTitle title="Elige o Describe tu Diseño" step={4} />
+                <SectionTitle title="Elige o Describe tu Diseño" step={selectedProductType?.hasSizes ? stepCounter +1 : stepCounter} />
                 <h4 className="text-xl font-body font-semibold text-foreground mb-4">Opción A: Escoge un Diseño Exclusivo</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
                   {designs.map((design) => (
@@ -495,14 +502,14 @@ export default function CustomizeOrder() {
           <div className="lg:col-span-1 mt-12 lg:mt-0 sticky top-24 z-10 self-start">
             <div ref={summarySectionRef} className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border scroll-mt-24">
               <h3 className="text-2xl md:text-3xl font-headline font-semibold text-center text-primary mb-6">Resumen de tu Selección</h3>
-              {selectedShirtType || selectedColor || finalSelectedDesign || (aiPrompt.trim() && aiGeneratedImageUrl) ? (
+              {selectedProductType || selectedColor || finalSelectedDesign || (aiPrompt.trim() && aiGeneratedImageUrl) ? (
                 <div className="space-y-3 mb-8 text-center font-body text-muted-foreground">
-                  <p><strong>Tipo de Prenda:</strong> {selectedShirtType?.name || 'No seleccionado'} ({selectedShirtType ? `$${selectedShirtType.price.toFixed(2)}` : ''})</p>
-                  {selectedShirtTypeId && <p><strong>Talla:</strong> {currentSelectedSize?.name || 'No seleccionada'}</p>}
+                  <p><strong>Tipo de Prenda:</strong> {selectedProductType?.name || 'No seleccionado'} ({selectedProductType ? `$${selectedProductType.price.toFixed(2)}` : ''})</p>
+                  {selectedProductType?.hasSizes && <p><strong>Talla:</strong> {currentSelectedSize?.name || 'No seleccionada'}</p>}
                   <p><strong>Color:</strong> {selectedColor?.name || 'No seleccionado'}</p>
                   <p><strong>Diseño:</strong> {designSummaryName} {designPriceString && `(${designPriceString})`}</p>
 
-                  {(selectedShirtType && (finalSelectedDesign || (aiPrompt.trim() && aiGeneratedImageUrl))) && (
+                  {(selectedProductType && (finalSelectedDesign || (aiPrompt.trim() && aiGeneratedImageUrl))) && (
                     <p className="text-lg font-bold text-foreground mt-2">
                       Precio Unitario Estimado: ${currentPrice.toFixed(2)}
                     </p>
@@ -516,8 +523,8 @@ export default function CustomizeOrder() {
                 onClick={handleAddToCart}
                 disabled={
                   !isClient || 
-                  !selectedShirtTypeId || 
-                  (selectedShirtTypeId && !selectedSize) || 
+                  !selectedProductTypeId || 
+                  (selectedProductType?.hasSizes && !selectedSize) || 
                   !selectedColorId || 
                   (!selectedDesignId && (!aiPrompt.trim() || !aiGeneratedImageUrl)) ||
                   (aiPrompt.trim() && !aiGeneratedImageUrl && !selectedDesignId) || 
