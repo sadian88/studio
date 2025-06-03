@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/CartContext';
 import { generateDesign } from '@/ai/flows/generate-design-flow';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const productTypes = [
  { id: 'short-sleeve', name: 'Manga Corta', imgSrc: '/camisetas/cnegramangacorta.png', hint: 'shortsleeve shirt', price: 20, hasSizes: true },
@@ -79,7 +80,6 @@ export default function CustomizeOrder() {
       if (selectedProductType?.hasSizes && sizeSectionRef.current) {
         scrollToSection(sizeSectionRef);
       } else if (!selectedProductType?.hasSizes && colorSectionRef.current) {
-        // If no sizes, scroll directly to color section
         scrollToSection(colorSectionRef);
       }
     }
@@ -436,6 +436,22 @@ export default function CustomizeOrder() {
                     <Sparkles className="w-5 h-5 mr-2 text-accent" />
                     Opción B: Describe tu idea para nuestro generador IA
                   </h4>
+
+                  <Alert className="mb-4 border-primary/30 bg-primary/10 text-primary-foreground shadow-md">
+                    <Info className="h-5 w-5 !text-primary" />
+                    <AlertTitle className="font-headline text-primary">¡Información Importante!</AlertTitle>
+                    <AlertDescription className="text-foreground/80 space-y-1.5">
+                      <p className="flex items-start">
+                        <Sparkles className="inline-block w-4 h-4 mr-1.5 mt-0.5 shrink-0 text-primary" />
+                        <span>Puedes generar hasta <strong>3 diseños con nuestra IA cada 24 horas</strong>. ¡Explora tu creatividad!</span>
+                      </p>
+                      <p className="flex items-start">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block w-4 h-4 mr-1.5 mt-0.5 shrink-0 text-primary"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+                        <span>Si ya tienes una imagen o un diseño listo, ¡genial! Puedes saltarte este paso. Al enviar tu pedido por WhatsApp, podrás compartirnos tu archivo.</span>
+                      </p>
+                    </AlertDescription>
+                  </Alert>
+
                   <Textarea
                     placeholder="Ej: Un astronauta surfeando en una pizza con temática espacial y colores neón..."
                     value={aiPrompt}
