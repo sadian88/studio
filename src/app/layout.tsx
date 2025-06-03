@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from '@/context/CartContext';
 import PromotionalBanner from '@/components/layout/PromotionalBanner';
 import AppHeader from '@/components/layout/AppHeader';
+import FirebaseAnalyticsInitializer from '@/components/layout/FirebaseAnalyticsInitializer'; // Import the new component
 
 export const metadata: Metadata = {
   title: 'CAMISETIA', // Updated title
@@ -30,6 +31,7 @@ export default function RootLayout({
           <AppHeader />
           {children}
           <Toaster />
+          <FirebaseAnalyticsInitializer /> {/* Add the initializer component here */}
         </CartProvider>
       </body>
     </html>
