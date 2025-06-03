@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for generating images based on a text prompt.
@@ -31,30 +32,65 @@ const generateDesignFlow = ai.defineFlow(
     outputSchema: GenerateDesignOutputSchema,
   },
   async (input) => {
-    const {media, text} = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-exp', // MUST use this model for images
-      prompt: input.prompt,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE
-        safetySettings: [ // Adjust safety settings for more creative freedom
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        ],
-      },
-    });
+    let mediaUrl: string | undefined = undefined;
+    let aiTextResponse: string | undefined = undefined;
 
-    if (!media || !media.url) {
-      console.error('Image generation failed or did not return a media URL. AI Text response:', text);
-      throw new Error('La generación de la imagen falló. No se recibió URL de la imagen.');
-    }
-    
-    // Log any text response, it might contain useful info or error messages from the model
-    if (text) {
-        console.log("AI Text response during image generation:", text);
-    }
+    try {
+      const {media, text} = await ai.generate({
+        model: 'googleai/gemini-2.0-flash-exp', // MUST use this model for images
+        prompt: input.prompt,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE
+          safetySettings: [ // Adjust safety settings for more creative freedom
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          ],
+        },
+      });
+      
+      mediaUrl = media?.url;
+      aiTextResponse = text;
 
-    return { imageDataUri: media.url };
+      if (aiTextResponse) {
+        console.log("AI Text response during image generation (server log):", aiTextResponse);
+      }
+
+      if (!mediaUrl) {
+        let internalErrorMessage = 'Image generation failed: No media URL returned from AI.';
+        if (aiTextResponse) {
+          internalErrorMessage += ` AI Text (server log): "${aiTextResponse}"`;
+        }
+        console.error(internalErrorMessage); // For server logs
+
+        // Construct a user-facing error message
+        let userErrorMessage = 'La IA no pudo generar una imagen en este momento.';
+        if (aiTextResponse && (aiTextResponse.toLowerCase().includes('block') || aiTextResponse.toLowerCase().includes('safety') || aiTextResponse.toLowerCase().includes('policy'))) {
+            userErrorMessage = `Tu idea fue bloqueada por políticas de contenido de la IA. Intenta con otra descripción. (Detalle: ${aiTextResponse})`;
+        } else if (aiTextResponse && aiTextResponse.trim() !== "" && aiTextResponse.trim().toLowerCase() !== "unknown") {
+            // Try to provide a snippet of the AI's text response if it seems like an error/explanation
+            const snippet = aiTextResponse.substring(0, 120);
+            userErrorMessage = `La IA tuvo un problema: ${snippet}${aiTextResponse.length > 120 ? '...' : ''}`;
+        }
+        throw new Error(userErrorMessage);
+      }
+
+      return { imageDataUri: mediaUrl };
+
+    } catch (flowError) {
+      // Catch errors from ai.generate() or the explicit throw above.
+      console.error("Error within generateDesignFlow (server log):", flowError);
+      
+      if (flowError instanceof Error) {
+        // If the error message already seems user-friendly or is one we constructed, prefer it.
+        // Otherwise, Next.js will likely obfuscate it in production anyway.
+        // This specific message format helps distinguish it if not obfuscated.
+        throw new Error(`Error en el flujo de IA: ${flowError.message}`);
+      }
+      // Fallback for non-Error objects thrown
+      throw new Error('Ocurrió un error inesperado en el servidor durante la generación de la imagen por IA.');
+    }
   }
 );
+
