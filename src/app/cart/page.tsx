@@ -92,6 +92,7 @@ export default function CartPage() {
               </div>
               <div className="p-5 flex flex-col flex-grow">
                 <h2 className="text-lg md:text-xl font-headline font-semibold text-foreground">{item.shirtType.name}</h2>
+                {item.size && <p className="text-sm text-muted-foreground">Talla: {item.size.name}</p>}
                 <p className="text-sm text-muted-foreground">Color: {item.color.name}</p>
                 <p className="text-sm text-muted-foreground">
                   Diseño: {item.design.name}
@@ -173,3 +174,5 @@ export default function CartPage() {
     </main>
   );
 }
+
+    

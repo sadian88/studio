@@ -4,20 +4,24 @@
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 
-// Define the structure of a cart item
 export interface CartItem {
   id: string; 
   shirtType: { id: string; name: string; imgSrc: string };
   color: { id: string; name: string; hex: string };
   design: { id: string; name: string; imgSrc: string; hint?: string }; 
+  size?: { id: string; name: string }; // Added size
   quantity: number;
   price: number; 
   aiPrompt?: string; 
 }
 
+// Input type for adding to cart, ensuring all necessary fields are there before ID and quantity are assigned.
+export type AddToCartItemInput = Omit<CartItem, 'id' | 'quantity'>;
+
+
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity' | 'id'> & { design: { id: string; name: string; imgSrc: string; hint?: string } }) => void;
+  addToCart: (item: AddToCartItemInput) => void;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -37,13 +41,9 @@ type CartAction =
 const cartReducer = (state: CartItem[], action: CartAction): CartItem[] => {
   switch (action.type) {
     case 'ADD_ITEM': {
-      // The ID in action.payload.id is now expected to be unique for each AI generated item.
-      // For standard items, it's shirtType-color-designId.
-      // For AI items, it's shirtType-color-ai-generated-timestamp-promptSnippet (or similar unique structure from CustomizeOrder via addToCart).
       const existingItemIndex = state.findIndex(item => item.id === action.payload.id);
 
       if (existingItemIndex > -1) {
-        // If item ID is identical (e.g., a pre-made design, or user clicked "add to cart" multiple times for *the exact same* AI generated item which should be rare now)
         return state.map((item, index) =>
           index === existingItemIndex
             ? { ...item, quantity: item.quantity + action.payload.quantity }
@@ -91,19 +91,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [cartItems]);
 
-  const addToCart = useCallback((itemData: Omit<CartItem, 'quantity' | 'id'> & { design: { id: string; name: string; imgSrc: string; hint?: string } }) => {
-    // itemData.design.id comes from CustomizeOrder.tsx
-    // For AI designs, it's `ai-generated-${timestamp}`
-    // For pre-made, it's `design1`, etc.
-    
+  const addToCart = useCallback((itemData: AddToCartItemInput) => {
     let finalItemId: string;
+    const baseId = `${itemData.shirtType.id}-${itemData.color.id}`;
+    const sizeIdPart = itemData.size ? `-${itemData.size.id}` : '';
+    
     if (itemData.design.id.startsWith('ai-generated') && itemData.aiPrompt) {
-      // Append a snippet of the prompt for better human readability in IDs if needed,
-      // but the timestamp in itemData.design.id should ensure uniqueness.
       const promptSnippet = itemData.aiPrompt.substring(0,15).replace(/\s/g, '');
-      finalItemId = `${itemData.shirtType.id}-${itemData.color.id}-${itemData.design.id}-${promptSnippet}`;
+      finalItemId = `${baseId}${sizeIdPart}-${itemData.design.id}-${promptSnippet}`;
     } else {
-      finalItemId = `${itemData.shirtType.id}-${itemData.color.id}-${itemData.design.id}`;
+      finalItemId = `${baseId}${sizeIdPart}-${itemData.design.id}`;
     }
     
     const newItem: CartItem = {
@@ -150,3 +147,5 @@ export const useCart = () => {
   }
   return context;
 };
+
+    
