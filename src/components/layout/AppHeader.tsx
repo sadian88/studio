@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { useCart } from '@/context/CartContext';
 import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from 'react';
 
 const navItems = [
   { href: '/#collections', label: 'Colecciones' },
@@ -17,6 +18,11 @@ const navItems = [
 export default function AppHeader() {
   const { getItemCount } = useCart();
   const itemCount = getItemCount();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const whatsappNumber = '+5491112345678'; // Your WhatsApp number
   const whatsappMessage = 'Hola quiero mas informacion sobre sus productos'; // Your desired message
@@ -72,7 +78,7 @@ export default function AppHeader() {
           <Link href="/cart" passHref>
             <Button variant="ghost" size="icon" aria-label="Carrito de compras" className="relative">
               <ShoppingCart className="h-6 w-6 text-accent" />
-              {itemCount > 0 && (
+              {isClient && itemCount > 0 && (
                 <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs rounded-full">
                   {itemCount}
                 </Badge>
@@ -128,7 +134,7 @@ export default function AppHeader() {
                       href="/cart"
                       className="text-lg font-medium text-foreground hover:text-primary transition-colors flex items-center"
                     >  
-                      <ShoppingCart className="h-5 w-5 mr-2" /> Carrito {itemCount > 0 && `(${itemCount})`}
+                      <ShoppingCart className="h-5 w-5 mr-2" /> Carrito {isClient && itemCount > 0 && `(${itemCount})`}
                     </Link>
                   </SheetClose>
               </nav>
