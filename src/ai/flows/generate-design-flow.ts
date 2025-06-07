@@ -35,10 +35,10 @@ const GenerateDesignOutputSchema = z.object({
 });
 export type GenerateDesignOutput = z.infer<typeof GenerateDesignOutputSchema>;
 
-// IMPORTANT: User needs to replace these placeholders or set environment variables.
-// For Firebase App Hosting, use Secret Manager for production API keys.
-const RUNWAY_API_ENDPOINT = process.env.RUNWAY_API_ENDPOINT || 'YOUR_RUNWARE_SDXL_APP_RUNSYNC_ENDPOINT_HERE'; // e.g., 'https://your-sdxl-app.runware.ai/runsync'
-const RUNWAY_API_KEY = process.env.RUNWAY_API_KEY; // Your Runware API Token
+// Default endpoint. User should set RUNWAY_API_ENDPOINT environment variable for their specific setup.
+const DEFAULT_RUNWAY_API_ENDPOINT = 'https://api.runware.ai/v1/runsync';
+const RUNWAY_API_ENDPOINT = process.env.RUNWAY_API_ENDPOINT || DEFAULT_RUNWAY_API_ENDPOINT;
+const RUNWAY_API_KEY = process.env.RUNWAY_API_KEY; 
 
 async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateDesignOutput> {
   const userId = 'simulated-user-id'; // Replace with actual user ID in a real app
@@ -59,10 +59,15 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
     console.error("Runware API Key (Token) is not configured. Please set the RUNWAY_API_KEY environment variable.");
     throw new Error("La configuración para la generación de imágenes IA no está completa (API Key). Por favor, contacta al administrador.");
   }
-  if (RUNWAY_API_ENDPOINT === 'YOUR_RUNWARE_SDXL_APP_RUNSYNC_ENDPOINT_HERE' || !RUNWAY_API_ENDPOINT.includes('runware.ai/runsync')) {
-    console.error("Runware API Endpoint is not configured correctly. Please set the RUNWAY_API_ENDPOINT environment variable to your Runware app's /runsync URL.");
+
+  // Check if the endpoint is the default placeholder and if it's not set via env var, or if it's misconfigured.
+  if (RUNWAY_API_ENDPOINT === DEFAULT_RUNWAY_API_ENDPOINT && !process.env.RUNWAY_API_ENDPOINT) {
+    console.warn(`Runware API Endpoint is using the default value: ${DEFAULT_RUNWAY_API_ENDPOINT}. If this is not your specific endpoint, please set the RUNWAY_API_ENDPOINT environment variable.`);
+  } else if (!RUNWAY_API_ENDPOINT.includes('runware.ai/runsync') && !RUNWAY_API_ENDPOINT.includes('runsync')) { // Looser check for 'runsync'
+    console.error("Runware API Endpoint is not configured correctly. It should be your specific Runware app's /runsync URL (e.g., https://your-app.runware.ai/runsync or https://api.runware.ai/v1/runsync). Please set the RUNWAY_API_ENDPOINT environment variable.");
     throw new Error("La configuración para la generación de imágenes IA no está completa (endpoint). Por favor, contacta al administrador.");
   }
+
 
   generatedDesigns.push({ timestamp: Date.now(), userId });
 
@@ -70,9 +75,9 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
     const requestBody = {
       inputs: {
         prompt: input.prompt.trim(),
-        width: 512, // Default width, adjust as needed
-        height: 512, // Default height, adjust as needed
-        seed: Date.now(), // For variability
+        width: 512, 
+        height: 512, 
+        seed: Date.now(), 
         // Add other Runware SDXL parameters if needed, e.g.:
         // negative_prompt: "blurry, low quality",
         // num_inference_steps: 50,
@@ -91,13 +96,13 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
       body: JSON.stringify(requestBody),
     });
 
-    const result = await response.json(); // Try to parse JSON regardless of response.ok for error details
+    const result = await response.json(); 
 
     if (!response.ok) {
       let errorDetails = `Runware API request failed with status: ${response.status}.`;
       if (result && result.error && result.error.message) {
         errorDetails += ` Details: ${result.error.message}`;
-      } else if (result && result.detail) { // Some APIs might use 'detail'
+      } else if (result && result.detail) { 
          errorDetails += ` Details: ${typeof result.detail === 'string' ? result.detail : JSON.stringify(result.detail)}`;
       } else {
         errorDetails += ` Response: ${JSON.stringify(result)}`;
