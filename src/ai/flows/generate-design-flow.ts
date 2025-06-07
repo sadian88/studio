@@ -1,9 +1,9 @@
 
 'use server';
 /**
- * @fileOverview A flow for generating images based on a text prompt using RunwayML API.
+ * @fileOverview A flow for generating images based on a text prompt using Runware API.
  *
- * - generateDesign - Generates an image from a prompt using RunwayML.
+ * - generateDesign - Generates an image from a prompt using Runware.
  * - GenerateDesignInput - The input type for the generateDesign function.
  * - GenerateDesignOutput - The return type for the generateDesign function.
  */
@@ -30,19 +30,18 @@ const GenerateDesignInputSchema = z.object({
 export type GenerateDesignInput = z.infer<typeof GenerateDesignInputSchema>;
 
 const GenerateDesignOutputSchema = z.object({
-  // The output is expected to be a direct URL to the image.
-  imageDataUri: z.string().describe("The generated image as a direct URL from RunwayML API."),
+  // The output is expected to be a base64 data URI.
+  imageDataUri: z.string().describe("The generated image as a base64 data URI from Runware API."),
 });
 export type GenerateDesignOutput = z.infer<typeof GenerateDesignOutputSchema>;
 
-// IMPORTANT: User needs to replace these placeholders with actual RunwayML details.
-// You should store your API key securely, preferably in an environment variable.
+// IMPORTANT: User needs to replace these placeholders or set environment variables.
 // For Firebase App Hosting, use Secret Manager for production API keys.
-const RUNWAY_API_ENDPOINT = process.env.RUNWAY_API_ENDPOINT || 'YOUR_RUNWAYML_API_ENDPOINT_HERE'; // e.g., 'https://api.runwayml.com/v1/...'
-const RUNWAY_API_KEY = process.env.RUNWAY_API_KEY; // Ensure this environment variable is set
+const RUNWAY_API_ENDPOINT = process.env.RUNWAY_API_ENDPOINT || 'YOUR_RUNWARE_SDXL_APP_RUNSYNC_ENDPOINT_HERE'; // e.g., 'https://your-sdxl-app.runware.ai/runsync'
+const RUNWAY_API_KEY = process.env.RUNWAY_API_KEY; // Your Runware API Token
 
 async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateDesignOutput> {
-  const userId = 'simulated-user-id'; 
+  const userId = 'simulated-user-id'; // Replace with actual user ID in a real app
 
   cleanUpOldRecords();
 
@@ -57,81 +56,88 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
   }
 
   if (!RUNWAY_API_KEY) {
-    console.error("RunwayML API Key is not configured. Please set the RUNWAY_API_KEY environment variable.");
-    throw new Error("La configuración para la generación de imágenes IA no está completa. Por favor, contacta al administrador.");
+    console.error("Runware API Key (Token) is not configured. Please set the RUNWAY_API_KEY environment variable.");
+    throw new Error("La configuración para la generación de imágenes IA no está completa (API Key). Por favor, contacta al administrador.");
   }
-  if (RUNWAY_API_ENDPOINT === 'YOUR_RUNWAYML_API_ENDPOINT_HERE') {
-    console.error("RunwayML API Endpoint is not configured. Please set the RUNWAY_API_ENDPOINT environment variable or update the default in the code.");
+  if (RUNWAY_API_ENDPOINT === 'YOUR_RUNWARE_SDXL_APP_RUNSYNC_ENDPOINT_HERE' || !RUNWAY_API_ENDPOINT.includes('runware.ai/runsync')) {
+    console.error("Runware API Endpoint is not configured correctly. Please set the RUNWAY_API_ENDPOINT environment variable to your Runware app's /runsync URL.");
     throw new Error("La configuración para la generación de imágenes IA no está completa (endpoint). Por favor, contacta al administrador.");
   }
 
   generatedDesigns.push({ timestamp: Date.now(), userId });
 
   try {
-    // IMPORTANT: Customize the requestBody to match what your specific RunwayML model/endpoint expects.
-    // This is a generic example.
     const requestBody = {
-      prompt: input.prompt.trim(),
-      // Common parameters you might need to add:
-      // width: 512,
-      // height: 512,
-      // model_id: 'your-runwayml-model-id', // If applicable
-      // seed: Date.now(), // For reproducibility, if supported
-      // n_samples: 1, // Number of images
-      // ... any other parameters required by RunwayML
+      inputs: {
+        prompt: input.prompt.trim(),
+        width: 512, // Default width, adjust as needed
+        height: 512, // Default height, adjust as needed
+        seed: Date.now(), // For variability
+        // Add other Runware SDXL parameters if needed, e.g.:
+        // negative_prompt: "blurry, low quality",
+        // num_inference_steps: 50,
+        // guidance_scale: 7.5,
+      }
     };
 
-    console.log("Sending request to RunwayML:", RUNWAY_API_ENDPOINT, "with prompt:", input.prompt.trim());
+    console.log("Sending request to Runware:", RUNWAY_API_ENDPOINT, "with prompt:", input.prompt.trim());
 
     const response = await fetch(RUNWAY_API_ENDPOINT, {
-      method: 'POST', // Or 'GET', or other method as required by RunwayML
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RUNWAY_API_KEY}`, // Common authentication method, adjust if needed
-        // Add any other headers required by RunwayML
+        'Authorization': `Bearer ${RUNWAY_API_KEY}`,
       },
       body: JSON.stringify(requestBody),
     });
 
+    const result = await response.json(); // Try to parse JSON regardless of response.ok for error details
+
     if (!response.ok) {
-      let errorDetails = `RunwayML API request failed with status: ${response.status}.`;
-      try {
-        const errorResponse = await response.json(); // Try to parse error response from RunwayML
-        errorDetails += ` Details: ${JSON.stringify(errorResponse.detail || errorResponse.message || errorResponse)}`;
-      } catch (e) {
-        const errorText = await response.text().catch(() => "");
-        errorDetails += ` Response: ${errorText || "(Could not retrieve error text)"}`;
+      let errorDetails = `Runware API request failed with status: ${response.status}.`;
+      if (result && result.error && result.error.message) {
+        errorDetails += ` Details: ${result.error.message}`;
+      } else if (result && result.detail) { // Some APIs might use 'detail'
+         errorDetails += ` Details: ${typeof result.detail === 'string' ? result.detail : JSON.stringify(result.detail)}`;
+      } else {
+        errorDetails += ` Response: ${JSON.stringify(result)}`;
       }
       console.error(errorDetails);
-      throw new Error(`La IA de RunwayML no pudo generar una imagen. ${errorDetails}`);
+      throw new Error(`La IA de Runware no pudo generar una imagen. ${errorDetails}`);
     }
     
-    const result = await response.json();
+    if (result.status !== 'SUCCEEDED' || !result.outputs || !result.outputs.image_base64) {
+      let errorReason = "La respuesta de Runware no fue exitosa o no contenía los datos de imagen esperados.";
+      if (result.status && result.status !== 'SUCCEEDED') {
+        errorReason += ` Estado: ${result.status}.`;
+      }
+      if (result.error && result.error.message) {
+        errorReason += ` Error: ${result.error.message}.`;
+      }
+      console.error("Runware API call did not succeed or returned unexpected data. Response:", result);
+      throw new Error(errorReason);
+    }
 
-    // IMPORTANT: Adapt the line below to correctly extract the image URL from the RunwayML API response.
-    // Check the RunwayML API documentation for the response structure.
-    // Examples: result.imageUrl, result.outputs[0].url, result.asset.url, etc.
-    const imageUrl = result.url || result.imageUrl || result.image_url || (result.outputs && result.outputs[0]?.url); 
+    const imageDataUri = result.outputs.image_base64; 
 
-    if (!imageUrl || typeof imageUrl !== 'string') {
-      console.error("RunwayML API did not return a valid image URL in the expected format. Response:", result);
-      throw new Error("La IA de RunwayML no devolvió una URL de imagen válida. Revisa la estructura de la respuesta.");
+    if (!imageDataUri || typeof imageDataUri !== 'string' || !imageDataUri.startsWith('data:image')) {
+      console.error("Runware API did not return a valid base64 image data URI. Received:", imageDataUri);
+      throw new Error("La IA de Runware no devolvió una URI de datos de imagen válida.");
     }
     
-    return { imageDataUri: imageUrl };
+    return { imageDataUri: imageDataUri };
 
   } catch (error) {
-    console.error("Error in generateDesignFlow with RunwayML:", error);
+    console.error("Error in generateDesignFlow with Runware:", error);
     if (error instanceof Error) {
-      // Prepend a user-friendly message if it's not already one from our checks
-      const knownErrors = ["Has alcanzado el límite", "La IA de RunwayML no pudo", "La IA de RunwayML no devolvió"];
+      const knownErrors = ["Has alcanzado el límite", "La IA de Runware no pudo", "La IA de Runware no devolvió", "La respuesta de Runware no fue exitosa"];
       if (!knownErrors.some(knownError => error.message.startsWith(knownError))) {
-        throw new Error(`Error generando diseño con RunwayML: ${error.message}`);
+        throw new Error(`Error generando diseño con Runware: ${error.message}`);
       } else {
-        throw error; // Re-throw if it's already a user-friendly error
+        throw error; 
       }
     }
-    throw new Error('Ocurrió un error inesperado durante la generación de la imagen con RunwayML.');
+    throw new Error('Ocurrió un error inesperado durante la generación de la imagen con Runware.');
   }
 }
 
