@@ -36,9 +36,9 @@ const GenerateDesignOutputSchema = z.object({
 });
 export type GenerateDesignOutput = z.infer<typeof GenerateDesignOutputSchema>;
 
-const RUNWAY_API_ENDPOINT = 'https://api.runware.ai/v1';
+const RUNWAY_API_BASE_ENDPOINT = 'https://api.runware.ai/v1';
 const RUNWAY_API_KEY = process.env.RUNWAY_API_KEY;
-const DEFAULT_MODEL_ID = "runware:101@1"; // Updated model ID
+const DEFAULT_MODEL_ID = "runware:101@1";
 
 async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateDesignOutput> {
   const userId = 'simulated-user-id'; // Replace with actual user ID in a real app
@@ -63,6 +63,7 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
   generatedDesigns.push({ timestamp: Date.now(), userId });
 
   const imageTaskUUID = randomUUID();
+  const finalPrompt = `${input.prompt.trim()}. El diseño es para estampar en camisetas, por lo que debe estar pensado para eso. Evitar texto o letras en el diseño.`;
 
   try {
     const requestBody = [
@@ -73,7 +74,7 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
       {
         taskType: "imageInference",
         taskUUID: imageTaskUUID,
-        positivePrompt: input.prompt.trim(),
+        positivePrompt: finalPrompt,
         width: 512, 
         height: 512, 
         model: DEFAULT_MODEL_ID, 
@@ -83,9 +84,9 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
       }
     ];
 
-    console.log("Sending request to Runware:", RUNWAY_API_ENDPOINT, "with tasks for prompt:", input.prompt.trim());
+    console.log("Sending request to Runware:", RUNWAY_API_BASE_ENDPOINT, "with tasks for prompt:", finalPrompt);
 
-    const response = await fetch(RUNWAY_API_ENDPOINT, {
+    const response = await fetch(RUNWAY_API_BASE_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
