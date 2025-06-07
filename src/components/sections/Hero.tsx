@@ -17,7 +17,7 @@ export default function Hero() {
         size="lg"
         className="mt-10 font-headline font-bold text-base md:text-lg px-10 py-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md shadow-lg hover:shadow-primary/40 transition-all duration-300"
       >
-        <Link href="#create-idea">COMENCEMOS</Link>
+        <Link href="#create-idea">Diseña tu prenda</Link>
       </Button>
     </section>
   );

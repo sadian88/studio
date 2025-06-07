@@ -34,11 +34,12 @@ const colors = [
 ];
 
 const designs = [
-  { id: 'design1', name: 'Diseño Abstracto Caballo', imgSrc: '/disenios/caballopunk.png', hint: 'abstract design', priceModifier: 0 },
-  { id: 'design2', name: 'Patrón Gráfico Urbano', imgSrc: '/disenios/rikymorty.png', hint: 'graphic pattern', priceModifier: 0 },
-  { id: 'design3', name: 'Arte Minimalista Elegante', imgSrc: '/disenios/spider.png', hint: 'minimalist art', priceModifier: 0 },
-  { id: 'design4', name: 'Logo Vintage Clásico', imgSrc: '/disenios/onepushman.png', hint: 'vintage logo', priceModifier: 0 },
-  { id: 'design5', name: 'Ilustración Naturaleza Fresca', imgSrc: '/disenios/gym.png', hint: 'nature illustration', priceModifier: 0 },
+  { id: 'p1', name: 'Diseño 1', imgSrc: '/disenios/p1.png', hint: 'design 1', priceModifier: 0 },
+  { id: 'p2', name: 'Diseño 2', imgSrc: '/disenios/p2.png', hint: 'design 2', priceModifier: 0 },
+  { id: 'p3', name: 'Diseño 3', imgSrc: '/disenios/p3.png', hint: 'design 3', priceModifier: 0 },
+  { id: 'p4', name: 'Diseño 4', imgSrc: '/disenios/p4.png', hint: 'design 4', priceModifier: 0 },
+  { id: 'p5', name: 'Diseño 5', imgSrc: '/disenios/p5.png', hint: 'design 5', priceModifier: 0 },
+  { id: 'p6', name: 'Diseño 6', imgSrc: '/disenios/p6.png', hint: 'design 6', priceModifier: 0 },
 ];
 
 const aiStyles = [

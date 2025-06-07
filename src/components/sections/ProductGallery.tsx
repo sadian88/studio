@@ -3,10 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 
 const products = [
   { id: 1, src: '/camisetas/cami2.png', alt: 'Diseño Camiseta Moderna', hint: 'tshirt design' },
-  { id: 3, src: '/camisetas/cami1.png', alt: 'Gorra Estampada Exclusiva', hint: 'tshirt design' },
-  { id: 4, src: '/camisetas/cami2.png', alt: 'Camiseta Gráfica Impactante', hint: 'tshirt design' },
-  { id: 5, src: '/camisetas/cami1.png', alt: 'Diseño Minimalista Prenda', hint: 'tshirt design' },
-  { id: 6, src: '/camisetas/cami2.png', alt: 'Producto Único Personalizado', hint: 'tshirt design' },
+  { id: 2, src: '/muestras/d2.png', alt: 'Hoodie Personalizado Urbano', hint: 'hoodie mockup' },
+  { id: 3, src: '/muestras/d3.png', alt: 'Gorra Estampada Exclusiva', hint: 'cap design' },
+  { id: 4, src: '/muestras/d4.png', alt: 'Camiseta Gráfica Impactante', hint: 'graphic tee' },
+  { id: 5, src: '/muestras/d5.png', alt: 'Diseño Minimalista Prenda', hint: 'minimalist apparel' },
+  { id: 6, src: '/muestras/d6.png', alt: 'Producto Único Personalizado', hint: 'custom product' },
 ];
 
 export default function ProductGallery() {
@@ -24,7 +25,7 @@ export default function ProductGallery() {
                   <Image
                     src={product.src}
                     alt={product.alt}
-                    fill
+                    fill // La prop fill está bien para ocupar el contenedor
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                     data-ai-hint={product.hint}
