@@ -80,6 +80,8 @@ export default function CustomizeOrder() {
   const colorSectionRef = useRef<HTMLDivElement>(null);
   const designSectionRef = useRef<HTMLDivElement>(null);
   const summarySectionRef = useRef<HTMLDivElement>(null);
+  const aiGenerationSectionRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     setIsClient(true);
@@ -337,12 +339,16 @@ export default function CustomizeOrder() {
     designSummaryName = `Diseño IA: "${userAiPrompt.trim().substring(0, 30)}..."`;
     if (AI_GENERATED_DESIGN_PRICE_MODIFIER > 0) {
       designPriceString = `+$${AI_GENERATED_DESIGN_PRICE_MODIFIER.toLocaleString('es-CO')}`;
+    } else if (AI_GENERATED_DESIGN_PRICE_MODIFIER === 0) {
+        designPriceString = ''; 
     }
   } else if (finalSelectedDesign) {
     currentPrice += finalSelectedDesign.priceModifier;
     designSummaryName = finalSelectedDesign.name;
     if (finalSelectedDesign.priceModifier > 0) {
       designPriceString = `+$${finalSelectedDesign.priceModifier.toLocaleString('es-CO')}`;
+    } else if (finalSelectedDesign.priceModifier === 0) {
+      designPriceString = '';
     }
   }
 
@@ -458,7 +464,14 @@ export default function CustomizeOrder() {
             
             {selectedProductTypeId && (!selectedProductType?.hasSizes || selectedSize) && selectedColorId && (
               <div ref={designSectionRef} className="scroll-mt-24">
-                <SectionTitle title="Elige o Describe tu Diseño" step={selectedProductType?.hasSizes ? stepCounter +1 : stepCounter} />
+                <div className="flex items-center mb-6">
+                  <div className="bg-primary text-primary-foreground rounded-full h-8 w-8 flex items-center justify-center font-bold text-lg mr-3">
+                    {selectedProductType?.hasSizes ? stepCounter + 1 : stepCounter}
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-headline font-semibold text-foreground">
+                    Elige o Describe tu <a href="#ai-generation-area" className="text-accent hover:underline" onClick={(e) => { e.preventDefault(); scrollToSection(aiGenerationSectionRef);}}>Diseño con IA</a>
+                  </h3>
+                </div>
                 <h4 className="text-xl font-body font-semibold text-foreground mb-4">Opción A: Escoge un Diseño Exclusivo</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
                   {designs.map((design) => (
@@ -496,7 +509,7 @@ export default function CustomizeOrder() {
 
                 <Separator className="my-8 bg-border/40" />
 
-                <div>
+                <div ref={aiGenerationSectionRef} id="ai-generation-area" className="scroll-mt-24">
                     <h4 className="text-xl font-body font-semibold text-foreground mb-4 flex items-center">
                         <Sparkles className="w-5 h-5 mr-2 text-accent" />
                         Opción B: Describe tu idea para nuestro generador IA
@@ -511,7 +524,7 @@ export default function CustomizeOrder() {
                             <span>Puedes generar hasta <strong>3 diseños con nuestra IA cada 24 horas</strong>. ¡Explora tu creatividad!</span>
                         </p>
                         <p className="flex items-start">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block w-4 h-4 mr-1.5 mt-0.5 shrink-0 text-primary"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                           <UploadCloud className="inline-block w-4 h-4 mr-1.5 mt-0.5 shrink-0 text-primary" />
                            <span>Si ya tienes una imagen o un diseño listo, ¡genial! Puedes saltarte este paso. Al enviar tu pedido por WhatsApp, podrás compartirnos tu archivo.</span>
                         </p>
                         </AlertDescription>
@@ -553,7 +566,7 @@ export default function CustomizeOrder() {
                     </div>
 
                     <Textarea
-                        placeholder="Ej: Un gato ninja, un león psicodélico, una calavera con flores..."
+                        placeholder="Ej: Un gato ninja, un león psicodélico..."
                         value={userAiPrompt}
                         onChange={handleUserAiPromptChange}
                         className="min-h-[100px] text-base border-input focus:ring-accent bg-card placeholder:text-muted-foreground/70"
