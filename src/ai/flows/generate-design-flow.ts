@@ -1,9 +1,9 @@
 
 'use server';
 /**
- * @fileOverview A flow for generating images based on a text prompt using Pollinations API.
+ * @fileOverview A flow for generating images based on a text prompt using RunwayML API.
  *
- * - generateDesign - Generates an image from a prompt using Pollinations.
+ * - generateDesign - Generates an image from a prompt using RunwayML.
  * - GenerateDesignInput - The input type for the generateDesign function.
  * - GenerateDesignOutput - The return type for the generateDesign function.
  */
@@ -30,14 +30,19 @@ const GenerateDesignInputSchema = z.object({
 export type GenerateDesignInput = z.infer<typeof GenerateDesignInputSchema>;
 
 const GenerateDesignOutputSchema = z.object({
-  imageDataUri: z.string().describe("The generated image as a direct URL from Pollinations API."),
+  // The output is expected to be a direct URL to the image.
+  imageDataUri: z.string().describe("The generated image as a direct URL from RunwayML API."),
 });
 export type GenerateDesignOutput = z.infer<typeof GenerateDesignOutputSchema>;
 
+// IMPORTANT: User needs to replace these placeholders with actual RunwayML details.
+// You should store your API key securely, preferably in an environment variable.
+// For Firebase App Hosting, use Secret Manager for production API keys.
+const RUNWAY_API_ENDPOINT = process.env.RUNWAY_API_ENDPOINT || 'YOUR_RUNWAYML_API_ENDPOINT_HERE'; // e.g., 'https://api.runwayml.com/v1/...'
+const RUNWAY_API_KEY = process.env.RUNWAY_API_KEY; // Ensure this environment variable is set
+
 async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateDesignOutput> {
-  // Simulate authentication or get user ID from context/session
-  // In a real application, you would get the user ID from the authenticated session
-  const userId = 'simulated-user-id'; // Using a placeholder for demonstration
+  const userId = 'simulated-user-id'; 
 
   cleanUpOldRecords();
 
@@ -51,43 +56,82 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
     throw new Error("El prompt para generar la imagen no puede estar vacío.");
   }
 
+  if (!RUNWAY_API_KEY) {
+    console.error("RunwayML API Key is not configured. Please set the RUNWAY_API_KEY environment variable.");
+    throw new Error("La configuración para la generación de imágenes IA no está completa. Por favor, contacta al administrador.");
+  }
+  if (RUNWAY_API_ENDPOINT === 'YOUR_RUNWAYML_API_ENDPOINT_HERE') {
+    console.error("RunwayML API Endpoint is not configured. Please set the RUNWAY_API_ENDPOINT environment variable or update the default in the code.");
+    throw new Error("La configuración para la generación de imágenes IA no está completa (endpoint). Por favor, contacta al administrador.");
+  }
+
   generatedDesigns.push({ timestamp: Date.now(), userId });
 
   try {
-    const encodedPrompt = encodeURIComponent(input.prompt.trim());
-    // Using Pollinations API. Requesting a 512x512 image.
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=512&height=512&seed=${Date.now()}`;
-    // We could add a fetch here to verify the image URL is valid and returns a 200 with an image content-type,
-    // but for simplicity, we'll return the URL directly. The browser will handle broken links.
-    // If the API call itself fails (e.g. network error, or Pollinations is down),
-    // the client-side calling function should catch this.
+    // IMPORTANT: Customize the requestBody to match what your specific RunwayML model/endpoint expects.
+    // This is a generic example.
+    const requestBody = {
+      prompt: input.prompt.trim(),
+      // Common parameters you might need to add:
+      // width: 512,
+      // height: 512,
+      // model_id: 'your-runwayml-model-id', // If applicable
+      // seed: Date.now(), // For reproducibility, if supported
+      // n_samples: 1, // Number of images
+      // ... any other parameters required by RunwayML
+    };
 
-    // To make it behave somewhat like the previous Gemini flow, we will try to fetch
-    // to see if an image is actually returned, otherwise Pollinations might return an error page.
-    const response = await fetch(imageUrl, { method: 'GET' });
+    console.log("Sending request to RunwayML:", RUNWAY_API_ENDPOINT, "with prompt:", input.prompt.trim());
+
+    const response = await fetch(RUNWAY_API_ENDPOINT, {
+      method: 'POST', // Or 'GET', or other method as required by RunwayML
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RUNWAY_API_KEY}`, // Common authentication method, adjust if needed
+        // Add any other headers required by RunwayML
+      },
+      body: JSON.stringify(requestBody),
+    });
 
     if (!response.ok) {
-        // Attempt to get some text from the response if it's not an image
-        const errorText = await response.text().catch(() => "Pollinations API request failed.");
-        console.error("Pollinations API error:", response.status, errorText);
-        throw new Error(`La IA de Pollinations no pudo generar una imagen (estado: ${response.status}). Intenta con otra descripción o más tarde.`);
+      let errorDetails = `RunwayML API request failed with status: ${response.status}.`;
+      try {
+        const errorResponse = await response.json(); // Try to parse error response from RunwayML
+        errorDetails += ` Details: ${JSON.stringify(errorResponse.detail || errorResponse.message || errorResponse)}`;
+      } catch (e) {
+        const errorText = await response.text().catch(() => "");
+        errorDetails += ` Response: ${errorText || "(Could not retrieve error text)"}`;
+      }
+      console.error(errorDetails);
+      throw new Error(`La IA de RunwayML no pudo generar una imagen. ${errorDetails}`);
     }
     
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.startsWith('image/')) {
-        console.error("Pollinations API did not return an image. Content-Type:", contentType);
-        throw new Error("La IA de Pollinations no devolvió una imagen válida. Intenta con otra descripción.");
+    const result = await response.json();
+
+    // IMPORTANT: Adapt the line below to correctly extract the image URL from the RunwayML API response.
+    // Check the RunwayML API documentation for the response structure.
+    // Examples: result.imageUrl, result.outputs[0].url, result.asset.url, etc.
+    const imageUrl = result.url || result.imageUrl || result.image_url || (result.outputs && result.outputs[0]?.url); 
+
+    if (!imageUrl || typeof imageUrl !== 'string') {
+      console.error("RunwayML API did not return a valid image URL in the expected format. Response:", result);
+      throw new Error("La IA de RunwayML no devolvió una URL de imagen válida. Revisa la estructura de la respuesta.");
     }
     
-    // The URL itself is what we need, as Pollinations serves the image directly.
-    return { imageDataUri: response.url }; // or imageUrl, response.url handles potential redirects
+    return { imageDataUri: imageUrl };
 
   } catch (error) {
-    console.error("Error in generateDesignFlow with Pollinations:", error);
+    console.error("Error in generateDesignFlow with RunwayML:", error);
     if (error instanceof Error) {
-      throw new Error(`Error generando diseño con Pollinations: ${error.message}`);
+      // Prepend a user-friendly message if it's not already one from our checks
+      const knownErrors = ["Has alcanzado el límite", "La IA de RunwayML no pudo", "La IA de RunwayML no devolvió"];
+      if (!knownErrors.some(knownError => error.message.startsWith(knownError))) {
+        throw new Error(`Error generando diseño con RunwayML: ${error.message}`);
+      } else {
+        throw error; // Re-throw if it's already a user-friendly error
+      }
     }
-    throw new Error('Ocurrió un error inesperado durante la generación de la imagen con Pollinations.');
+    throw new Error('Ocurrió un error inesperado durante la generación de la imagen con RunwayML.');
   }
 }
 
