@@ -1,7 +1,7 @@
 
 module.exports = {
   apps : [{
-    name   : "flashprint-designs-app", // You can change this to your preferred app name
+    name   : "camisetia", // App name updated
     script : "node_modules/.bin/next", // Command to run Next.js in production
     args   : "start -p 3000",         // Default port for Next.js, change if needed
     cwd    : ".",                     // Current working directory
