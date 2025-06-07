@@ -13,7 +13,7 @@ module.exports = {
        NODE_ENV: "production",
        // --- RUNWARE API ---
        // Replace with your REAL Runware API Key
-       RUNWAY_API_KEY: "YOUR_ACTUAL_RUNWAY_API_KEY_HERE",
+       RUNWAY_API_KEY: "xxxxx",
        // This is the general Runware API endpoint for batched tasks.
        // Authentication is now done via apiKey in the request body.
        RUNWAY_API_ENDPOINT: "https://api.runware.ai/v1",
