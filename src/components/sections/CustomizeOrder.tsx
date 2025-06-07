@@ -643,7 +643,7 @@ export default function CustomizeOrder() {
                     {userAiPrompt.trim() && (
                         <div className="mt-4 p-3 rounded-lg border border-accent/50 bg-accent/10 text-accent font-medium text-sm flex items-center gap-2.5 shadow-sm">
                         <Info className="h-5 w-5 shrink-0" />
-                        <span>Importante: La imagen generada por IA debes enviarla a nuestro WhatsApp para confirmar el diseño.</span>
+                        <span>Importante: La imagen generada por IA se guarda automáticamente en nuestro sistema. Te contactaremos por WhatsApp para confirmar los detalles del diseño.</span>
                         </div>
                     )}
                 </div>
