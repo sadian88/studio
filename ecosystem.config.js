@@ -14,8 +14,8 @@ module.exports = {
        // --- RUNWARE API ---
        // Replace with your REAL Runware API Key
        RUNWAY_API_KEY: "YOUR_ACTUAL_RUNWAY_API_KEY_HERE",
-       // Replace with your REAL Runware API Endpoint for your SDXL app
-       RUNWAY_API_ENDPOINT: "YOUR_ACTUAL_RUNWAY_API_ENDPOINT_HERE", // e.g., 'https://your-sdxl-app.runware.ai/runsync'
+       // Replace <your-sdxl-app-name> with your actual Runware application name
+       RUNWAY_API_ENDPOINT: "https://<your-sdxl-app-name>.runware.ai/runsync",
 
        // --- GOOGLE API (if you still use it for other Genkit flows or Firebase services) ---
        // Replace with your REAL Google API Key
