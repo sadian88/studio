@@ -60,6 +60,7 @@ const aiBackgrounds = [
 const AI_GENERATED_DESIGN_PRICE_MODIFIER = 0;
 const AI_DESIGN_PLACEHOLDER_IMG = 'https://placehold.co/250x250.png';
 const AI_DESIGN_PLACEHOLDER_HINT = 'AI custom design';
+const MAX_AI_PROMPT_LENGTH = 150;
 
 export default function CustomizeOrder() {
   const [selectedProductTypeId, setSelectedProductTypeId] = useState<string | null>(null);
@@ -158,8 +159,13 @@ export default function CustomizeOrder() {
   };
 
   const handleUserAiPromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setUserAiPrompt(event.target.value);
-    if (event.target.value.trim()) {
+    const newPrompt = event.target.value;
+    if (newPrompt.length <= MAX_AI_PROMPT_LENGTH) {
+        setUserAiPrompt(newPrompt);
+    } else {
+        setUserAiPrompt(newPrompt.substring(0, MAX_AI_PROMPT_LENGTH));
+    }
+    if (newPrompt.trim()) {
       setSelectedDesignId(null); 
     }
   };
@@ -569,9 +575,13 @@ export default function CustomizeOrder() {
                         placeholder="Ej: Un gato ninja, un león psicodélico..."
                         value={userAiPrompt}
                         onChange={handleUserAiPromptChange}
+                        maxLength={MAX_AI_PROMPT_LENGTH}
                         className="min-h-[100px] text-base border-input focus:ring-accent bg-card placeholder:text-muted-foreground/70"
                         rows={3}
                     />
+                    <div className="text-right text-xs text-muted-foreground mt-1">
+                        {userAiPrompt.length}/{MAX_AI_PROMPT_LENGTH} caracteres
+                    </div>
                     <Button
                         onClick={handleGenerateAiDesign}
                         disabled={!userAiPrompt.trim() || !selectedAiStyle || !selectedAiBackground || isGeneratingImage}
