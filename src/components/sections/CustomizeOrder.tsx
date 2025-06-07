@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, ShoppingCart, ArrowRight, Sparkles, Loader2, Info } from 'lucide-react';
+import { CheckCircle2, ShoppingCart, ArrowRight, Sparkles, Loader2, Info, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/CartContext';
@@ -41,6 +41,21 @@ const designs = [
   { id: 'design5', name: 'Ilustración Naturaleza Fresca', imgSrc: '/disenios/gym.png', hint: 'nature illustration', priceModifier: 0 },
 ];
 
+const aiStyles = [
+    { id: 'ciberpunk', name: 'CiberPunk', promptSuffix: 'estilo CiberPunk' },
+    { id: 'realista', name: 'Realista', promptSuffix: 'estilo Realista' },
+    { id: 'poster', name: 'Poster', promptSuffix: 'estilo Poster' },
+    { id: 'urbano-graffiti', name: 'Urbano Graffiti', promptSuffix: 'estilo Urbano Graffiti' },
+    { id: 'neon', name: 'Neon', promptSuffix: 'estilo Neon' },
+    { id: 'tierno', name: 'Tierno', promptSuffix: 'estilo Tierno' },
+    { id: 'flat', name: 'Flat', promptSuffix: 'estilo Flat (Plano)' },
+];
+
+const aiBackgrounds = [
+    { id: 'fondo-negro', name: 'Fondo Negro', promptSuffix: 'con fondo negro' },
+    { id: 'fondo-blanco', name: 'Fondo Blanco', promptSuffix: 'con fondo blanco' },
+];
+
 const AI_GENERATED_DESIGN_PRICE_MODIFIER = 0;
 const AI_DESIGN_PLACEHOLDER_IMG = 'https://placehold.co/250x250.png';
 const AI_DESIGN_PLACEHOLDER_HINT = 'AI custom design';
@@ -50,7 +65,9 @@ export default function CustomizeOrder() {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
   const [selectedDesignId, setSelectedDesignId] = useState<string | null>(null);
-  const [aiPrompt, setAiPrompt] = useState<string>('');
+  const [userAiPrompt, setUserAiPrompt] = useState<string>('');
+  const [selectedAiStyle, setSelectedAiStyle] = useState<string | null>(null);
+  const [selectedAiBackground, setSelectedAiBackground] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [aiGeneratedImageUrl, setAiGeneratedImageUrl] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState<boolean>(false);
@@ -115,7 +132,9 @@ export default function CustomizeOrder() {
     setSelectedSize(null); 
     setSelectedColorId(null);
     setSelectedDesignId(null);
-    setAiPrompt('');
+    setUserAiPrompt('');
+    setSelectedAiStyle(null);
+    setSelectedAiBackground(null);
     setAiGeneratedImageUrl(null);
   };
 
@@ -129,32 +148,49 @@ export default function CustomizeOrder() {
 
   const handleSelectDesign = (designId: string) => {
     setSelectedDesignId(designId);
-    setAiPrompt(''); 
+    setUserAiPrompt(''); 
+    setSelectedAiStyle(null);
+    setSelectedAiBackground(null);
     setAiGeneratedImageUrl(null); 
   };
 
-  const handleAiPromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setAiPrompt(event.target.value);
+  const handleUserAiPromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setUserAiPrompt(event.target.value);
     if (event.target.value.trim()) {
-      setSelectedDesignId(null); 
+      setSelectedDesignId(null); // Deselect predefined design if user starts typing AI prompt
     }
   };
 
   const handleGenerateAiDesign = async () => {
-    if (!aiPrompt.trim()) {
-      toast({ title: "Entrada Requerida", description: "Por favor, ingresa una descripción para tu diseño.", variant: "destructive", duration: 3000 });
+    if (!userAiPrompt.trim()) {
+      toast({ title: "Descripción Requerida", description: "Por favor, ingresa una descripción para tu idea.", variant: "destructive", duration: 3000 });
       return;
     }
+    if (!selectedAiStyle) {
+      toast({ title: "Estilo Requerido", description: "Por favor, selecciona un estilo para tu diseño IA.", variant: "destructive", duration: 3000 });
+      return;
+    }
+    if (!selectedAiBackground) {
+      toast({ title: "Fondo Requerido", description: "Por favor, selecciona un fondo para tu diseño IA.", variant: "destructive", duration: 3000 });
+      return;
+    }
+
     setIsGeneratingImage(true);
     setAiGeneratedImageUrl(null); 
     setSelectedDesignId(null); 
+
+    const styleObj = aiStyles.find(s => s.id === selectedAiStyle);
+    const backgroundObj = aiBackgrounds.find(b => b.id === selectedAiBackground);
+
+    const fullPrompt = `${userAiPrompt.trim()}, ${styleObj?.promptSuffix}, ${backgroundObj?.promptSuffix}`;
+
     try {
-      const result = await generateDesign({ prompt: aiPrompt.trim() });
+      const result = await generateDesign({ prompt: fullPrompt });
       if (result.imageDataUri) {
         setAiGeneratedImageUrl(result.imageDataUri);
         toast({ title: "¡Diseño IA Generado!", description: "Tu imagen personalizada ha sido creada.", duration: 3000 });
       } else {
-        throw new Error("No se recibió imagen del flujo de Genkit.");
+        throw new Error("No se recibió imagen del flujo de generación.");
       }
     } catch (error) {
       console.error("Error generating AI design:", error);
@@ -170,13 +206,27 @@ export default function CustomizeOrder() {
     }
   };
 
+  const handleSaveImage = () => {
+    if (!aiGeneratedImageUrl) return;
+    const link = document.createElement('a');
+    link.href = aiGeneratedImageUrl;
+    // Attempt to extract a filename from the prompt or use a generic one
+    const userPromptPart = userAiPrompt.trim().substring(0, 20).replace(/\s+/g, '_') || 'ai_design';
+    const stylePart = selectedAiStyle || 'custom_style';
+    link.download = `cami_design_${userPromptPart}_${stylePart}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: "Imagen Guardada", description: "La descarga de la imagen debería haber comenzado.", duration: 3000});
+  };
+
   const handleAddToCart = () => {
-    if (!selectedProductTypeId || (selectedProductType?.hasSizes && !selectedSize) || !selectedColorId || (!selectedDesignId && !aiPrompt.trim())) {
+    if (!selectedProductTypeId || (selectedProductType?.hasSizes && !selectedSize) || !selectedColorId || (!selectedDesignId && !userAiPrompt.trim())) {
       let description = 'Por favor, completa todos los pasos de personalización.';
       if (!selectedProductTypeId) description = 'Por favor, elige un tipo de prenda.';
       else if (selectedProductType?.hasSizes && !selectedSize) description = 'Por favor, elige una talla.';
       else if (!selectedColorId) description = 'Por favor, elige un color.';
-      else if (!selectedDesignId && !aiPrompt.trim()) description = 'Por favor, elige un diseño predefinido o describe tu idea para IA.';
+      else if (!selectedDesignId && !userAiPrompt.trim()) description = 'Por favor, elige un diseño predefinido o describe tu idea para IA.';
       
       toast({
         title: '¡Completa tu selección!',
@@ -187,7 +237,17 @@ export default function CustomizeOrder() {
       return;
     }
     
-    if (aiPrompt.trim() && !aiGeneratedImageUrl && !selectedDesignId) {
+    if (userAiPrompt.trim() && (!selectedAiStyle || !selectedAiBackground)) {
+        toast({
+            title: 'Estilo y Fondo Requeridos para IA',
+            description: 'Por favor, selecciona un estilo y un fondo si vas a generar un diseño con IA.',
+            variant: 'destructive',
+            duration: 3000,
+        });
+        return;
+    }
+
+    if (userAiPrompt.trim() && !aiGeneratedImageUrl && !selectedDesignId) {
         toast({
             title: 'Diseño IA no generado',
             description: 'Por favor, genera tu diseño IA o selecciona uno predefinido antes de añadir al carrito.',
@@ -210,7 +270,7 @@ export default function CustomizeOrder() {
     let itemPrice = productType.price;
     let promptForCart: string | undefined = undefined;
 
-    if (aiPrompt.trim() && aiGeneratedImageUrl) {
+    if (userAiPrompt.trim() && aiGeneratedImageUrl) {
       const uniqueAiId = `ai-generated-${Date.now()}`;
       designForCart = {
         id: uniqueAiId,
@@ -219,7 +279,7 @@ export default function CustomizeOrder() {
         hint: 'AI generated custom design'
       };
       itemPrice += AI_GENERATED_DESIGN_PRICE_MODIFIER;
-      promptForCart = aiPrompt.trim();
+      promptForCart = userAiPrompt.trim(); // Guardamos el prompt original del usuario
     } else if (selectedDesignId) {
       const selectedDesign = designs.find(d => d.id === selectedDesignId);
       if (!selectedDesign) {
@@ -272,14 +332,14 @@ export default function CustomizeOrder() {
   let designSummaryName = 'No seleccionado';
   let designPriceString = '';
 
-  if (aiPrompt.trim() && aiGeneratedImageUrl) {
+  if (userAiPrompt.trim() && aiGeneratedImageUrl) {
     currentPrice += AI_GENERATED_DESIGN_PRICE_MODIFIER;
-    designSummaryName = `Diseño IA: "${aiPrompt.trim().substring(0, 30)}..."`;
-    designPriceString = AI_GENERATED_DESIGN_PRICE_MODIFIER > 0 ? `+$${AI_GENERATED_DESIGN_PRICE_MODIFIER.toFixed(2)}` : '';
+    designSummaryName = `Diseño IA: "${userAiPrompt.trim().substring(0, 30)}..."`;
+    designPriceString = AI_GENERATED_DESIGN_PRICE_MODIFIER > 0 ? `+$${AI_GENERATED_DESIGN_PRICE_MODIFIER.toLocaleString('es-CO')}` : '';
   } else if (finalSelectedDesign) {
     currentPrice += finalSelectedDesign.priceModifier;
     designSummaryName = finalSelectedDesign.name;
-    designPriceString = finalSelectedDesign.priceModifier > 0 ? `+$${finalSelectedDesign.priceModifier.toFixed(2)}` : '';
+    designPriceString = finalSelectedDesign.priceModifier > 0 ? `+$${finalSelectedDesign.priceModifier.toLocaleString('es-CO')}` : '';
   }
 
   let stepCounter = 1;
@@ -401,7 +461,7 @@ export default function CustomizeOrder() {
                       key={design.id}
                       onClick={() => handleSelectDesign(design.id)}
                       className={`cursor-pointer transition-all duration-300 ease-in-out transform hover:shadow-accent/30 hover:-translate-y-1 rounded-xl overflow-hidden group ${
-                        selectedDesignId === design.id && !aiPrompt ? 'ring-4 ring-accent shadow-accent/20' : 'ring-1 ring-border hover:ring-accent/50'
+                        selectedDesignId === design.id && !userAiPrompt ? 'ring-4 ring-accent shadow-accent/20' : 'ring-1 ring-border hover:ring-accent/50'
                       } bg-card`}
                     >
                       <CardContent className="p-0 relative">
@@ -415,7 +475,7 @@ export default function CustomizeOrder() {
                             data-ai-hint={design.hint}
                           />
                         </div>
-                        {selectedDesignId === design.id && !aiPrompt && (
+                        {selectedDesignId === design.id && !userAiPrompt && (
                           <div className="absolute top-2 right-2 bg-accent rounded-full p-1 shadow-md">
                             <CheckCircle2 className="w-5 h-5 text-accent-foreground" />
                           </div>
@@ -432,98 +492,142 @@ export default function CustomizeOrder() {
                 <Separator className="my-8 bg-border/40" />
 
                 <div>
-                  <h4 className="text-xl font-body font-semibold text-foreground mb-4 flex items-center">
-                    <Sparkles className="w-5 h-5 mr-2 text-accent" />
-                    Opción B: Describe tu idea para nuestro generador IA
-                  </h4>
+                    <h4 className="text-xl font-body font-semibold text-foreground mb-4 flex items-center">
+                        <Sparkles className="w-5 h-5 mr-2 text-accent" />
+                        Opción B: Describe tu idea para nuestro generador IA
+                    </h4>
 
-                  <Alert className="mb-4 border-primary/30 bg-primary/10 text-primary-foreground shadow-md">
-                    <Info className="h-5 w-5 !text-primary" />
-                    <AlertTitle className="font-headline text-primary">¡Información Importante!</AlertTitle>
-                    <AlertDescription className="text-foreground/80 space-y-1.5">
-                      <p className="flex items-start">
-                        <Sparkles className="inline-block w-4 h-4 mr-1.5 mt-0.5 shrink-0 text-primary" />
-                        <span>Puedes generar hasta <strong>3 diseños con nuestra IA cada 24 horas</strong>. ¡Explora tu creatividad!</span>
-                      </p>
-                      <p className="flex items-start">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block w-4 h-4 mr-1.5 mt-0.5 shrink-0 text-primary"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
-                        <span>Si ya tienes una imagen o un diseño listo, ¡genial! Puedes saltarte este paso. Al enviar tu pedido por WhatsApp, podrás compartirnos tu archivo.</span>
-                      </p>
-                    </AlertDescription>
-                  </Alert>
+                    <Alert className="mb-6 border-primary/30 bg-primary/10 text-primary-foreground shadow-md">
+                        <Info className="h-5 w-5 !text-primary" />
+                        <AlertTitle className="font-headline text-primary">¡Información Importante!</AlertTitle>
+                        <AlertDescription className="text-foreground/80 space-y-1.5">
+                        <p className="flex items-start">
+                            <Sparkles className="inline-block w-4 h-4 mr-1.5 mt-0.5 shrink-0 text-primary" />
+                            <span>Puedes generar hasta <strong>3 diseños con nuestra IA cada 24 horas</strong>. ¡Explora tu creatividad!</span>
+                        </p>
+                        <p className="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block w-4 h-4 mr-1.5 mt-0.5 shrink-0 text-primary"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+                            <span>Si ya tienes una imagen o un diseño listo, ¡genial! Puedes saltarte este paso. Al enviar tu pedido por WhatsApp, podrás compartirnos tu archivo.</span>
+                        </p>
+                        </AlertDescription>
+                    </Alert>
 
-                  <Textarea
-                    placeholder="Ej: Un astronauta surfeando en una pizza con temática espacial y colores neón..."
-                    value={aiPrompt}
-                    onChange={handleAiPromptChange}
-                    className="min-h-[100px] text-base border-input focus:ring-accent bg-card placeholder:text-muted-foreground/70"
-                    rows={4}
-                  />
-                  <Button
-                      onClick={handleGenerateAiDesign}
-                      disabled={!aiPrompt.trim() || isGeneratingImage}
-                      variant="outline"
-                      size="sm"
-                      className="mt-3 border-accent text-accent hover:bg-accent/10 hover:text-accent"
-                    >
-                      {isGeneratingImage ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Generando Imagen...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="mr-2 h-4 w-4" />
-                          Generar Diseño con IA
-                        </>
-                      )}
-                    </Button>
-                  {aiPrompt.trim() && AI_GENERATED_DESIGN_PRICE_MODIFIER > 0 && ( 
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Costo adicional por diseño IA: +${AI_GENERATED_DESIGN_PRICE_MODIFIER.toLocaleString('es-CO')}
-                    </p>
-                  )}
-
-                  {(aiPrompt.trim() || aiGeneratedImageUrl) && ( 
-                      <div className={`mt-4 p-4 border border-dashed rounded-lg bg-card/30 ${aiPrompt.trim() ? 'border-accent/50' : 'border-transparent'}`}>
-                          <h5 className="text-sm font-body font-semibold text-accent mb-2">Vista Previa Diseño IA</h5>
-                          <div className="flex justify-center items-center w-full max-w-xs mx-auto aspect-square bg-muted/20 rounded-md overflow-hidden">
-                          {isGeneratingImage ? (
-                              <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                  <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
-                                  <p className="text-sm">Cargando diseño...</p>
-                              </div>
-                          ) : aiGeneratedImageUrl ? (
-                              <Image
-                                  src={aiGeneratedImageUrl}
-                                  alt="Diseño generado por IA"
-                                  width={250}
-                                  height={250}
-                                  className="object-contain w-full h-full"
-                              />
-                          ) : ( 
-                               aiPrompt.trim() &&
-                               <Image
-                                  src={AI_DESIGN_PLACEHOLDER_IMG}
-                                  alt="Placeholder Diseño IA"
-                                  width={250}
-                                  height={250}
-                                  className="object-contain w-full h-full opacity-40"
-                                  data-ai-hint={AI_DESIGN_PLACEHOLDER_HINT}
-                                />
-                          )}
-                          { !aiPrompt.trim() && !aiGeneratedImageUrl && !isGeneratingImage && (
-                              <p className="text-sm text-muted-foreground p-4 text-center">Ingresa una descripción y haz clic en &quot;Generar Diseño con IA&quot; para ver una vista previa.</p>
-                          )}
-                          </div>
-                      </div>
-                  )}
-                   {aiPrompt.trim() && (
-                    <div className="mt-4 p-3 rounded-lg border border-accent/50 bg-accent/10 text-accent font-medium text-sm flex items-center gap-2.5 shadow-sm">
-                      <Info className="h-5 w-5 shrink-0" />
-                      <span>Importante: La imagen generada por IA debes enviarla a nuestro WhatsApp para confirmar el diseño.</span>
+                    <div className="mb-4 p-4 border border-dashed border-border rounded-lg bg-card/50">
+                        <div className="mb-4">
+                            <label htmlFor="ai-style" className="block text-sm font-medium text-foreground mb-1">Estilo (Obligatorio):</label>
+                            <div className="flex flex-wrap gap-2">
+                                {aiStyles.map(style => (
+                                <Button
+                                    key={style.id}
+                                    variant={selectedAiStyle === style.id ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setSelectedAiStyle(style.id)}
+                                    className={selectedAiStyle === style.id ? 'bg-accent text-accent-foreground' : ''}
+                                >
+                                    {style.name}
+                                </Button>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="ai-background" className="block text-sm font-medium text-foreground mb-1">Fondo (Obligatorio):</label>
+                            <div className="flex flex-wrap gap-2">
+                                {aiBackgrounds.map(bg => (
+                                <Button
+                                    key={bg.id}
+                                    variant={selectedAiBackground === bg.id ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setSelectedAiBackground(bg.id)}
+                                    className={selectedAiBackground === bg.id ? 'bg-accent text-accent-foreground' : ''}
+                                >
+                                    {bg.name}
+                                </Button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
-                  )}
+
+                    <Textarea
+                        placeholder="Ej: Un gato ninja, un león psicodélico, una calavera con flores..."
+                        value={userAiPrompt}
+                        onChange={handleUserAiPromptChange}
+                        className="min-h-[100px] text-base border-input focus:ring-accent bg-card placeholder:text-muted-foreground/70"
+                        rows={3}
+                    />
+                    <Button
+                        onClick={handleGenerateAiDesign}
+                        disabled={!userAiPrompt.trim() || !selectedAiStyle || !selectedAiBackground || isGeneratingImage}
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 border-accent text-accent hover:bg-accent/10 hover:text-accent"
+                        >
+                        {isGeneratingImage ? (
+                            <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Generando Imagen...
+                            </>
+                        ) : (
+                            <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Generar Diseño con IA
+                            </>
+                        )}
+                    </Button>
+                    {userAiPrompt.trim() && AI_GENERATED_DESIGN_PRICE_MODIFIER > 0 && ( 
+                        <p className="text-xs text-muted-foreground mt-2">
+                        Costo adicional por diseño IA: +${AI_GENERATED_DESIGN_PRICE_MODIFIER.toLocaleString('es-CO')}
+                        </p>
+                    )}
+
+                    {(userAiPrompt.trim() || aiGeneratedImageUrl) && ( 
+                        <div className={`mt-4 p-4 border border-dashed rounded-lg bg-card/30 ${userAiPrompt.trim() ? 'border-accent/50' : 'border-transparent'}`}>
+                            <h5 className="text-sm font-body font-semibold text-accent mb-2">Vista Previa Diseño IA</h5>
+                            <div className="flex flex-col items-center">
+                                <div className="flex justify-center items-center w-full max-w-xs mx-auto aspect-square bg-muted/20 rounded-md overflow-hidden">
+                                {isGeneratingImage ? (
+                                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                        <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
+                                        <p className="text-sm">Cargando diseño...</p>
+                                    </div>
+                                ) : aiGeneratedImageUrl ? (
+                                    <Image
+                                        src={aiGeneratedImageUrl}
+                                        alt="Diseño generado por IA"
+                                        width={250}
+                                        height={250}
+                                        className="object-contain w-full h-full"
+                                        data-ai-hint="AI generated custom design"
+                                    />
+                                ) : ( 
+                                    userAiPrompt.trim() &&
+                                    <Image
+                                        src={AI_DESIGN_PLACEHOLDER_IMG}
+                                        alt="Placeholder Diseño IA"
+                                        width={250}
+                                        height={250}
+                                        className="object-contain w-full h-full opacity-40"
+                                        data-ai-hint={AI_DESIGN_PLACEHOLDER_HINT}
+                                    />
+                                )}
+                                { !userAiPrompt.trim() && !aiGeneratedImageUrl && !isGeneratingImage && (
+                                    <p className="text-sm text-muted-foreground p-4 text-center">Ingresa una descripción y haz clic en &quot;Generar Diseño con IA&quot; para ver una vista previa.</p>
+                                )}
+                                </div>
+                                {aiGeneratedImageUrl && !isGeneratingImage && (
+                                <Button onClick={handleSaveImage} variant="secondary" size="sm" className="mt-3">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Guardar Imagen
+                                </Button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    {userAiPrompt.trim() && (
+                        <div className="mt-4 p-3 rounded-lg border border-accent/50 bg-accent/10 text-accent font-medium text-sm flex items-center gap-2.5 shadow-sm">
+                        <Info className="h-5 w-5 shrink-0" />
+                        <span>Importante: La imagen generada por IA debes enviarla a nuestro WhatsApp para confirmar el diseño.</span>
+                        </div>
+                    )}
                 </div>
               </div>
             )}
@@ -533,14 +637,14 @@ export default function CustomizeOrder() {
           <div className="lg:col-span-1 mt-12 lg:mt-0 sticky top-24 z-10 self-start">
             <div ref={summarySectionRef} className="bg-card p-6 md:p-8 rounded-xl shadow-xl border border-border scroll-mt-24">
               <h3 className="text-2xl md:text-3xl font-headline font-semibold text-center text-primary mb-6">Resumen de tu Selección</h3>
-              {selectedProductType || selectedColor || finalSelectedDesign || (aiPrompt.trim() && aiGeneratedImageUrl) ? (
+              {selectedProductType || selectedColor || finalSelectedDesign || (userAiPrompt.trim() && aiGeneratedImageUrl) ? (
                 <div className="space-y-3 mb-8 text-center font-body text-muted-foreground">
                   <p><strong>Tipo de Prenda:</strong> {selectedProductType?.name || 'No seleccionado'} ({selectedProductType ? `$${selectedProductType.price.toLocaleString('es-CO')}` : ''})</p>
                   {selectedProductType?.hasSizes && <p><strong>Talla:</strong> {currentSelectedSize?.name || 'No seleccionada'}</p>}
                   <p><strong>Color:</strong> {selectedColor?.name || 'No seleccionado'}</p>
                   <p><strong>Diseño:</strong> {designSummaryName} {designPriceString && `(${designPriceString})`}</p>
 
-                  {(selectedProductType && (finalSelectedDesign || (aiPrompt.trim() && aiGeneratedImageUrl))) && (
+                  {(selectedProductType && (finalSelectedDesign || (userAiPrompt.trim() && aiGeneratedImageUrl))) && (
                     <p className="text-lg font-bold text-foreground mt-2">
                       Precio Unitario Estimado: ${currentPrice.toLocaleString('es-CO')}
                     </p>
@@ -557,8 +661,8 @@ export default function CustomizeOrder() {
                   !selectedProductTypeId || 
                   (selectedProductType?.hasSizes && !selectedSize) || 
                   !selectedColorId || 
-                  (!selectedDesignId && (!aiPrompt.trim() || !aiGeneratedImageUrl)) ||
-                  (aiPrompt.trim() && !aiGeneratedImageUrl && !selectedDesignId) || 
+                  (!selectedDesignId && (!userAiPrompt.trim() || !aiGeneratedImageUrl || !selectedAiStyle || !selectedAiBackground)) ||
+                  (userAiPrompt.trim() && (!selectedAiStyle || !selectedAiBackground || !aiGeneratedImageUrl) && !selectedDesignId) || 
                   isGeneratingImage
                 }
                 className="w-full font-headline font-bold text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md shadow-lg hover:shadow-primary/40 transition-all duration-300 disabled:opacity-70"
