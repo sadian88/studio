@@ -11,10 +11,7 @@ import { Trash2, PlusCircle, MinusCircle, ShoppingBag, ArrowLeft, Sparkles, Send
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useCallback } from 'react';
 
-// Esta constante se usa para verificar si la URL es la de placeholder.
-// Idealmente, se importaría si estuviera en un archivo compartido, pero por ahora la definimos aquí.
-const AI_DESIGN_PLACEHOLDER_IMG_CHECK = 'https://placehold.co';
-
+// La constante AI_DESIGN_PLACEHOLDER_IMG_CHECK ha sido eliminada ya que no se utiliza más en esta página.
 
 export default function CartPage() {
   const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart, getItemCount } = useCart();
@@ -64,16 +61,9 @@ export default function CartPage() {
         message += `Diseño: Diseño Personalizado IA`;
         message += ".\n"; // Fin de la línea principal del ítem
         if (item.aiPrompt) {
-            message += `  Idea original para IA: "${item.aiPrompt}".\n`;
+            message += `  Tu idea original para la IA: "${item.aiPrompt}".\n`;
         }
-        // Incluir la URL de la imagen si es una URL real de Pollinations y no un placeholder
-        if (item.design.imgSrc && !item.design.imgSrc.startsWith(AI_DESIGN_PLACEHOLDER_IMG_CHECK) && item.design.imgSrc.includes('pollinations.ai')) {
-          message += `  Enlace a tu diseño IA: ${item.design.imgSrc}\n`;
-          message += `  *MUY IMPORTANTE: Por favor, adjunta también la imagen generada por IA que guardaste para confirmar el diseño.*\n`;
-        } else {
-          // Si no hay URL de Pollinations (quizás no se generó o es un placeholder), solo pedir la imagen
-          message += `  *MUY IMPORTANTE: Por favor, adjunta la imagen generada por IA que creaste con tu idea para confirmar el diseño.*\n`;
-        }
+        message += `  (La imagen que generaste con IA ha sido guardada automáticamente en nuestro sistema).\n`;
       } else {
         message += `Diseño: ${item.design.name}.\n`; // Fin de la línea principal del ítem
       }
