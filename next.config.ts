@@ -24,6 +24,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      { // Added for Runware image URLs (e.g., from im.runware.ai)
+        protocol: 'https',
+        hostname: 'im.runware.ai',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

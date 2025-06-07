@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A flow for generating images based on a text prompt using Runware API.
+ * @fileOverview A flow for generating images based on a text prompt using Runware API (batched task method).
  *
  * - generateDesign - Generates an image from a prompt using Runware.
  * - GenerateDesignInput - The input type for the generateDesign function.
@@ -9,6 +9,7 @@
  */
 
 import {z} from 'genkit';
+import { randomUUID } from 'crypto'; // For generating taskUUID
 
 interface DesignRecord {
   timestamp: number;
@@ -30,15 +31,14 @@ const GenerateDesignInputSchema = z.object({
 export type GenerateDesignInput = z.infer<typeof GenerateDesignInputSchema>;
 
 const GenerateDesignOutputSchema = z.object({
-  // The output is expected to be a base64 data URI.
-  imageDataUri: z.string().describe("The generated image as a base64 data URI from Runware API."),
+  // This will now contain the imageURL from Runware API.
+  imageDataUri: z.string().describe("The generated image URL from Runware API."),
 });
 export type GenerateDesignOutput = z.infer<typeof GenerateDesignOutputSchema>;
 
-// Default endpoint. User should set RUNWAY_API_ENDPOINT environment variable for their specific setup.
-const DEFAULT_RUNWAY_API_ENDPOINT = 'https://api.runware.ai/v1/runsync';
-const RUNWAY_API_ENDPOINT = process.env.RUNWAY_API_ENDPOINT || DEFAULT_RUNWAY_API_ENDPOINT;
-const RUNWAY_API_KEY = process.env.RUNWAY_API_KEY; 
+const RUNWAY_API_ENDPOINT = 'https://api.runware.ai/v1';
+const RUNWAY_API_KEY = process.env.RUNWAY_API_KEY;
+const DEFAULT_MODEL_ID = "civitai:102438@133677"; // Using model from your example
 
 async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateDesignOutput> {
   const userId = 'simulated-user-id'; // Replace with actual user ID in a real app
@@ -56,42 +56,40 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
   }
 
   if (!RUNWAY_API_KEY) {
-    console.error("Runware API Key (Token) is not configured. Please set the RUNWAY_API_KEY environment variable.");
+    console.error("Runware API Key is not configured. Please set the RUNWAY_API_KEY environment variable.");
     throw new Error("La configuración para la generación de imágenes IA no está completa (API Key). Por favor, contacta al administrador.");
   }
 
-  // Check if the endpoint is the default placeholder and if it's not set via env var, or if it's misconfigured.
-  if (RUNWAY_API_ENDPOINT === DEFAULT_RUNWAY_API_ENDPOINT && !process.env.RUNWAY_API_ENDPOINT) {
-    console.warn(`Runware API Endpoint is using the default value: ${DEFAULT_RUNWAY_API_ENDPOINT}. If this is not your specific endpoint, please set the RUNWAY_API_ENDPOINT environment variable.`);
-  } else if (!RUNWAY_API_ENDPOINT.includes('runware.ai/runsync') && !RUNWAY_API_ENDPOINT.includes('runsync')) { // Looser check for 'runsync'
-    console.error("Runware API Endpoint is not configured correctly. It should be your specific Runware app's /runsync URL (e.g., https://your-app.runware.ai/runsync or https://api.runware.ai/v1/runsync). Please set the RUNWAY_API_ENDPOINT environment variable.");
-    throw new Error("La configuración para la generación de imágenes IA no está completa (endpoint). Por favor, contacta al administrador.");
-  }
-
-
   generatedDesigns.push({ timestamp: Date.now(), userId });
 
+  const imageTaskUUID = randomUUID();
+
   try {
-    const requestBody = {
-      inputs: {
-        prompt: input.prompt.trim(),
+    const requestBody = [
+      {
+        taskType: "authentication",
+        apiKey: RUNWAY_API_KEY
+      },
+      {
+        taskType: "imageInference",
+        taskUUID: imageTaskUUID,
+        positivePrompt: input.prompt.trim(),
         width: 512, 
         height: 512, 
-        seed: Date.now(), 
-        // Add other Runware SDXL parameters if needed, e.g.:
-        // negative_prompt: "blurry, low quality",
-        // num_inference_steps: 50,
-        // guidance_scale: 7.5,
+        model: DEFAULT_MODEL_ID, 
+        numberResults: 1
+        // Add other Runware parameters if needed from the documentation
+        // e.g., negative_prompt, seed, guidance_scale, etc.
       }
-    };
+    ];
 
-    console.log("Sending request to Runware:", RUNWAY_API_ENDPOINT, "with prompt:", input.prompt.trim());
+    console.log("Sending request to Runware:", RUNWAY_API_ENDPOINT, "with tasks for prompt:", input.prompt.trim());
 
     const response = await fetch(RUNWAY_API_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RUNWAY_API_KEY}`,
+        // No Authorization header needed, API key is in the body
       },
       body: JSON.stringify(requestBody),
     });
@@ -100,8 +98,10 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
 
     if (!response.ok) {
       let errorDetails = `Runware API request failed with status: ${response.status}.`;
-      if (result && result.error && result.error.message) {
-        errorDetails += ` Details: ${result.error.message}`;
+      if (result && result.error && typeof result.error === 'string') {
+        errorDetails += ` Details: ${result.error}`;
+      } else if (result && result.error && result.error.message) {
+         errorDetails += ` Details: ${result.error.message}`;
       } else if (result && result.detail) { 
          errorDetails += ` Details: ${typeof result.detail === 'string' ? result.detail : JSON.stringify(result.detail)}`;
       } else {
@@ -111,31 +111,27 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
       throw new Error(`La IA de Runware no pudo generar una imagen. ${errorDetails}`);
     }
     
-    if (result.status !== 'SUCCEEDED' || !result.outputs || !result.outputs.image_base64) {
-      let errorReason = "La respuesta de Runware no fue exitosa o no contenía los datos de imagen esperados.";
-      if (result.status && result.status !== 'SUCCEEDED') {
-        errorReason += ` Estado: ${result.status}.`;
-      }
-      if (result.error && result.error.message) {
-        errorReason += ` Error: ${result.error.message}.`;
-      }
-      console.error("Runware API call did not succeed or returned unexpected data. Response:", result);
-      throw new Error(errorReason);
+    if (!result.data || !Array.isArray(result.data)) {
+      console.error("Runware API call did not return the expected 'data' array. Response:", result);
+      throw new Error("La respuesta de Runware no contenía los datos esperados.");
     }
 
-    const imageDataUri = result.outputs.image_base64; 
+    const inferenceResponse = result.data.find(
+      (task: any) => task.taskType === "imageInference" && task.taskUUID === imageTaskUUID
+    );
 
-    if (!imageDataUri || typeof imageDataUri !== 'string' || !imageDataUri.startsWith('data:image')) {
-      console.error("Runware API did not return a valid base64 image data URI. Received:", imageDataUri);
-      throw new Error("La IA de Runware no devolvió una URI de datos de imagen válida.");
+    if (!inferenceResponse || !inferenceResponse.imageURL) {
+      console.error("Runware API did not return a valid imageURL for the inference task. Response:", result);
+      throw new Error("La IA de Runware no devolvió una URL de imagen válida para la tarea de inferencia.");
     }
     
-    return { imageDataUri: imageDataUri };
+    const imageUrl = inferenceResponse.imageURL;
+    return { imageDataUri: imageUrl }; // imageDataUri now holds the URL
 
   } catch (error) {
-    console.error("Error in generateDesignFlow with Runware:", error);
+    console.error("Error in generateDesignFlow with Runware (batched task):", error);
     if (error instanceof Error) {
-      const knownErrors = ["Has alcanzado el límite", "La IA de Runware no pudo", "La IA de Runware no devolvió", "La respuesta de Runware no fue exitosa"];
+      const knownErrors = ["Has alcanzado el límite", "La IA de Runware no pudo", "La IA de Runware no devolvió", "La respuesta de Runware no contenía"];
       if (!knownErrors.some(knownError => error.message.startsWith(knownError))) {
         throw new Error(`Error generando diseño con Runware: ${error.message}`);
       } else {
