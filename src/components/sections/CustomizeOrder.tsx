@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, ShoppingCart, ArrowRight, Sparkles, Loader2, Info, Download } from 'lucide-react';
+import { CheckCircle2, ShoppingCart, ArrowRight, Sparkles, Loader2, Info, Download, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/CartContext';
@@ -27,7 +27,7 @@ const sizes = [
 ];
 
 const colors = [
-  { id: 'black', name: 'Negro', hex: '#000000', twClass: 'bg-black', borderClass: 'border-foreground' }, // Changed borderClass
+  { id: 'black', name: 'Negro', hex: '#000000', twClass: 'bg-black', borderClass: 'border-2 border-foreground' },
   { id: 'white', name: 'Blanco', hex: '#FFFFFF', twClass: 'bg-white', borderClass: 'border-gray-400' },
   { id: 'yellow', name: 'Amarillo', hex: '#F6E85C', twClass: 'bg-yellow-400' },
   { id: 'red', name: 'Rojo', hex: '#EF4444', twClass: 'bg-red-500' },
@@ -157,7 +157,7 @@ export default function CustomizeOrder() {
   const handleUserAiPromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setUserAiPrompt(event.target.value);
     if (event.target.value.trim()) {
-      setSelectedDesignId(null); // Deselect predefined design if user starts typing AI prompt
+      setSelectedDesignId(null); 
     }
   };
 
@@ -210,7 +210,6 @@ export default function CustomizeOrder() {
     if (!aiGeneratedImageUrl) return;
     const link = document.createElement('a');
     link.href = aiGeneratedImageUrl;
-    // Attempt to extract a filename from the prompt or use a generic one
     const userPromptPart = userAiPrompt.trim().substring(0, 20).replace(/\s+/g, '_') || 'ai_design';
     const stylePart = selectedAiStyle || 'custom_style';
     link.download = `cami_design_${userPromptPart}_${stylePart}.png`;
@@ -279,7 +278,7 @@ export default function CustomizeOrder() {
         hint: 'AI generated custom design'
       };
       itemPrice += AI_GENERATED_DESIGN_PRICE_MODIFIER;
-      promptForCart = userAiPrompt.trim(); // Guardamos el prompt original del usuario
+      promptForCart = userAiPrompt.trim(); 
     } else if (selectedDesignId) {
       const selectedDesign = designs.find(d => d.id === selectedDesignId);
       if (!selectedDesign) {
@@ -335,12 +334,17 @@ export default function CustomizeOrder() {
   if (userAiPrompt.trim() && aiGeneratedImageUrl) {
     currentPrice += AI_GENERATED_DESIGN_PRICE_MODIFIER;
     designSummaryName = `Diseño IA: "${userAiPrompt.trim().substring(0, 30)}..."`;
-    designPriceString = AI_GENERATED_DESIGN_PRICE_MODIFIER > 0 ? `+$${AI_GENERATED_DESIGN_PRICE_MODIFIER.toLocaleString('es-CO')}` : '';
+    if (AI_GENERATED_DESIGN_PRICE_MODIFIER > 0) {
+      designPriceString = `+$${AI_GENERATED_DESIGN_PRICE_MODIFIER.toLocaleString('es-CO')}`;
+    }
   } else if (finalSelectedDesign) {
     currentPrice += finalSelectedDesign.priceModifier;
     designSummaryName = finalSelectedDesign.name;
-    designPriceString = finalSelectedDesign.priceModifier > 0 ? `+$${finalSelectedDesign.priceModifier.toLocaleString('es-CO')}` : '';
+    if (finalSelectedDesign.priceModifier > 0) {
+      designPriceString = `+$${finalSelectedDesign.priceModifier.toLocaleString('es-CO')}`;
+    }
   }
+
 
   let stepCounter = 1;
 
@@ -507,7 +511,7 @@ export default function CustomizeOrder() {
                         </p>
                         <p className="flex items-start">
                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-block w-4 h-4 mr-1.5 mt-0.5 shrink-0 text-primary"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            <span>Si ya tienes una imagen o un diseño listo, ¡genial! Puedes saltarte este paso. Al enviar tu pedido por WhatsApp, podrás compartirnos tu archivo.</span>
+                           <span>Si ya tienes una imagen o un diseño listo, ¡genial! Puedes saltarte este paso. Al enviar tu pedido por WhatsApp, podrás compartirnos tu archivo.</span>
                         </p>
                         </AlertDescription>
                     </Alert>
@@ -639,10 +643,10 @@ export default function CustomizeOrder() {
               <h3 className="text-2xl md:text-3xl font-headline font-semibold text-center text-primary mb-6">Resumen de tu Selección</h3>
               {selectedProductType || selectedColor || finalSelectedDesign || (userAiPrompt.trim() && aiGeneratedImageUrl) ? (
                 <div className="space-y-3 mb-8 text-center font-body text-muted-foreground">
-                  <p><strong>Tipo de Prenda:</strong> {selectedProductType?.name || 'No seleccionado'} ({selectedProductType ? `$${selectedProductType.price.toLocaleString('es-CO')}` : ''})</p>
+                  <p><strong>Tipo de Prenda:</strong> {selectedProductType?.name || 'No seleccionado'} {selectedProductType ? `($${selectedProductType.price.toLocaleString('es-CO')})` : ''}</p>
                   {selectedProductType?.hasSizes && <p><strong>Talla:</strong> {currentSelectedSize?.name || 'No seleccionada'}</p>}
                   <p><strong>Color:</strong> {selectedColor?.name || 'No seleccionado'}</p>
-                  <p><strong>Diseño:</strong> {designSummaryName} {designPriceString && `(${designPriceString})`}</p>
+                  <p><strong>Diseño:</strong> {designSummaryName} {designPriceString}</p>
 
                   {(selectedProductType && (finalSelectedDesign || (userAiPrompt.trim() && aiGeneratedImageUrl))) && (
                     <p className="text-lg font-bold text-foreground mt-2">
