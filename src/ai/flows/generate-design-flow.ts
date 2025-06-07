@@ -38,7 +38,7 @@ export type GenerateDesignOutput = z.infer<typeof GenerateDesignOutputSchema>;
 
 const RUNWAY_API_ENDPOINT = 'https://api.runware.ai/v1';
 const RUNWAY_API_KEY = process.env.RUNWAY_API_KEY;
-const DEFAULT_MODEL_ID = "civitai:runware:104@1"; // Updated model ID
+const DEFAULT_MODEL_ID = "runware:101@1"; // Updated model ID
 
 async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateDesignOutput> {
   const userId = 'simulated-user-id'; // Replace with actual user ID in a real app
@@ -145,3 +145,4 @@ async function generateDesignFlow(input: GenerateDesignInput): Promise<GenerateD
 export async function generateDesign(input: GenerateDesignInput): Promise<GenerateDesignOutput> {
   return generateDesignFlow(input);
 }
+
