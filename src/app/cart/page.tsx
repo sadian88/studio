@@ -11,6 +11,11 @@ import { Trash2, PlusCircle, MinusCircle, ShoppingBag, ArrowLeft, Sparkles, Send
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useCallback } from 'react';
 
+// Esta constante se usa para verificar si la URL es la de placeholder.
+// Idealmente, se importaría si estuviera en un archivo compartido, pero por ahora la definimos aquí.
+const AI_DESIGN_PLACEHOLDER_IMG_CHECK = 'https://placehold.co';
+
+
 export default function CartPage() {
   const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart, getItemCount } = useCart();
   const { toast } = useToast();
@@ -54,17 +59,28 @@ export default function CartPage() {
         message += `Talla ${item.size.name}, `;
       }
       message += `Color ${item.color.name}. `;
-      message += `Diseño: ${item.design.name}`;
+      
       if (item.design.id.startsWith('ai-generated')) {
-          message += " (Generado por IA - *Por favor, adjunta la imagen que creaste con esta idea*)";
+        message += `Diseño: Diseño Personalizado IA`;
+        message += ".\n"; // Fin de la línea principal del ítem
+        if (item.aiPrompt) {
+            message += `  Idea original para IA: "${item.aiPrompt}".\n`;
+        }
+        // Incluir la URL de la imagen si es una URL real de Pollinations y no un placeholder
+        if (item.design.imgSrc && !item.design.imgSrc.startsWith(AI_DESIGN_PLACEHOLDER_IMG_CHECK) && item.design.imgSrc.includes('pollinations.ai')) {
+          message += `  Enlace a tu diseño IA: ${item.design.imgSrc}\n`;
+          message += `  *MUY IMPORTANTE: Por favor, adjunta también la imagen generada por IA que guardaste para confirmar el diseño.*\n`;
+        } else {
+          // Si no hay URL de Pollinations (quizás no se generó o es un placeholder), solo pedir la imagen
+          message += `  *MUY IMPORTANTE: Por favor, adjunta la imagen generada por IA que creaste con tu idea para confirmar el diseño.*\n`;
+        }
+      } else {
+        message += `Diseño: ${item.design.name}.\n`; // Fin de la línea principal del ítem
       }
-      message += ".\n";
-      if (item.aiPrompt) {
-        message += `  Tu idea para el diseño IA: "${item.aiPrompt}"\n`;
-      }
+      message += "\n"; // Añadir un salto de línea extra entre ítems para mejor legibilidad
     });
-    message += `\nSubtotal: $${getCartTotal().toLocaleString('es-CO')}\n\n`;
-    message += "¡Gracias por tu pedido!";
+    message += `Subtotal: $${getCartTotal().toLocaleString('es-CO')}\n\n`;
+    message += "¡Gracias!";
     return encodeURIComponent(message);
   }, [cartItems, getCartTotal]);
 
