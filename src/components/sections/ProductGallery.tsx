@@ -1,13 +1,14 @@
+
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 
 const products = [
-  { id: 1, src: '/camisetas/cami2.png', alt: 'Diseño Camiseta Moderna', hint: 'tshirt design' },
-  { id: 2, src: '/muestras/d2.png', alt: 'Hoodie Personalizado Urbano', hint: 'hoodie mockup' },
-  { id: 3, src: '/muestras/d3.png', alt: 'Gorra Estampada Exclusiva', hint: 'cap design' },
-  { id: 4, src: '/muestras/d4.png', alt: 'Camiseta Gráfica Impactante', hint: 'graphic tee' },
-  { id: 5, src: '/muestras/d5.png', alt: 'Diseño Minimalista Prenda', hint: 'minimalist apparel' },
-  { id: 6, src: '/muestras/d6.png', alt: 'Producto Único Personalizado', hint: 'custom product' },
+  { id: 1, src: '/camisetas/cami2.png', alt: 'Diseño 1', hint: 'tshirt design' },
+  { id: 2, src: '/muestras/d2.png', alt: 'Diseño 2', hint: 'hoodie mockup' },
+  { id: 3, src: '/muestras/d3.png', alt: 'Diseño 3', hint: 'cap design' },
+  { id: 4, src: '/muestras/d4.png', alt: 'Diseño 4', hint: 'graphic tee' },
+  { id: 5, src: '/muestras/d5.png', alt: 'Diseño 5', hint: 'minimalist apparel' },
+  { id: 6, src: '/muestras/d6.png', alt: 'Diseño 6', hint: 'custom product' },
 ];
 
 export default function ProductGallery() {
